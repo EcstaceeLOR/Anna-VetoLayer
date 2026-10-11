@@ -15,7 +15,11 @@
       rate_limited: "Anna is busy. No decision was issued; retry shortly.",
       not_implemented: "This Anna capability is unavailable in the current runtime.",
       malformed_llm_output: "Contextual analysis was unavailable, so this action remains in REVIEW.",
-      storage_error: "Receipt persistence failed. This result is marked unpersisted."
+      storage_error: "Receipt persistence failed. This result is marked unpersisted.",
+      quota_exceeded: "Anna storage is full. Export the receipt and clear unneeded local history before retrying.",
+      precondition_failed: "This receipt changed in another window. Refresh the history and retry the resolution.",
+      rate_limited: "Anna is busy. No decision was issued; retry shortly.",
+      not_granted: "Anna storage access is not granted for this app."
     };
     return { code: value, retryable: retryable.has(value), message: messages[value] || "Anna could not complete this request. No decision was issued." };
   }

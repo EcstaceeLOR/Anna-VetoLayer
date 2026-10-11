@@ -32,6 +32,7 @@ describe("Anna runtime harness", () => {
     expect(harness.calls.byNs("tools.invoke")).toHaveLength(1);
     expect(harness.calls.byNs("llm.complete")).toHaveLength(1);
     expect(harness.calls.byNs("storage.set")).toHaveLength(1);
+    expect(harness.runtime.storage.list).toBeUndefined();
     // CLI 0.1.58 exposes the old chat proxy only, but its ACL derives the current grant.
     expect(harness.acl.allowed.has("chat.append_artifact")).toBe(true);
   });

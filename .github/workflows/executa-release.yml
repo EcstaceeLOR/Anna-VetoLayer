@@ -1,0 +1,82 @@
+name: Executa release
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-verify:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            platform: darwin-x86_64
+          - os: macos-14
+            platform: darwin-arm64
+          - os: ubuntu-latest
+            platform: linux-x86_64
+          - os: windows-latest
+            platform: windows-x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm release:executa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: policy-engine-${{ matrix.platform }}
+          path: |
+            executas/policy-engine/dist/*.tar.gz
+            executas/policy-engine/dist/*.zip
+            executas/policy-engine/dist/*.sha256
+          if-no-files-found: error
+
+  validate-release:
+    name: Validate complete release set
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          path: executas/policy-engine/dist
+          merge-multiple: true
+      - run: pnpm validate
+
+  publish-github-release:
+    name: Publish GitHub release assets
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: validate-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: executas/policy-engine/dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            executas/policy-engine/dist/*.tar.gz
+            executas/policy-engine/dist/*.zip
+            executas/policy-engine/dist/*.sha256

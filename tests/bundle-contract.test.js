@@ -35,6 +35,13 @@ test("bundle and Executa handles resolve", () => {
   assert.ok(app.bundled_executas[handle]);
   assert.ok(fs.existsSync(path.join(root, app.bundled_executas[handle].path, "executa.json")));
   assert.ok(manifest.ui.host_api.tools.includes("required:*"));
+  assert.deepEqual(manifest.ui.host_api.chat, ["append_artifact"]);
+});
+
+test("bundle uses the supported transient Anna chat artifact handoff", () => {
+  assert.match(appJs, /chat\.append_artifact\(\{\s*artifact:/);
+  assert.doesNotMatch(appJs, /chat\.write_message/);
+  assert.match(html, /Conversation cards are realtime-only/);
 });
 
 test("Policy Engine has a complete binary release profile", () => {

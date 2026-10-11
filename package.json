@@ -11,7 +11,7 @@
     "dev": "anna-app dev",
     "dev:mock": "anna-app dev --mock-llm fixtures/context-review.jsonl",
     "validate": "anna-app validate --strict",
-    "test": "node --test executas/policy-engine/policy-engine.test.js tests/bundle-contract.test.js",
+    "test": "node --test executas/policy-engine/policy-engine.test.js tests/*.test.js",
     "smoke": "node scripts/smoke-plugin.js",
     "build:executa": "node executas/policy-engine/scripts/build-binary.mjs",
     "package:executa": "node executas/policy-engine/scripts/package-binary.mjs",

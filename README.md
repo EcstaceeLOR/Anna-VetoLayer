@@ -76,7 +76,7 @@ The UI also supports a standalone browser preview. Outside the Anna runtime, it 
 - Bundled Executa through `anna.tools.invoke`
 - Contextual AI through `anna.llm.complete`
 - Decision Receipt persistence through `anna.storage`
-- Conversation handoff through Anna chat artifacts
+- Conversation handoff through transient Anna chat artifacts (not conversation history or LLM context)
 - Responsive desktop and mobile App UI
 
 ## Safety invariants

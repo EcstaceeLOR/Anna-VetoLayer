@@ -42,7 +42,7 @@
       "tools": ["required:*"],
       "llm": ["complete"],
       "storage": ["get", "set", "list", "delete"],
-      "chat": ["write_message"],
+      "chat": ["append_artifact"],
       "window": ["set_title"]
     },
     "csp_overrides": {

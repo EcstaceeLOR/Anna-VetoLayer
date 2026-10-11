@@ -95,6 +95,17 @@ test("Policy Studio is versioned, validates activation, and cannot alter hard bl
   assert.match(appJs, /key: "policies\/active"/);
 });
 
+test("onboarding measures only privacy-safe qualified live runs", () => {
+  assert.match(html, /id="onboarding"/);
+  assert.match(html, /Preview runs are never counted as qualified activity/);
+  assert.match(appJs, /\$\("action-form"\)\.requestSubmit\(\)/);
+  assert.match(html, /src="growth-funnel\.js"/);
+  assert.match(appJs, /await recordFunnel\("opened"\)/);
+  assert.match(appJs, /await recordFunnel\("started"\)/);
+  assert.match(appJs, /await recordFunnel\("tool_success"\)/);
+  assert.match(appJs, /await recordFunnel\("receipt_viewed", persisted\)/);
+});
+
 test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
   assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
   for (const edge of ["top", "right", "bottom", "left"]) {

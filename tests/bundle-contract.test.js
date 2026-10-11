@@ -65,6 +65,14 @@ test("bundle uses external scripts only", () => {
   assert.ok(scriptTags.every((attributes) => /\bsrc=/.test(attributes)));
 });
 
+test("bundle loads the versioned entry payload contract and never auto-evaluates it", () => {
+  assert.match(html, /src="entry-payload\.js"/);
+  assert.match(appJs, /applyEntryPayload\(state\.anna\.entryPayload, "launch"\)/);
+  assert.match(appJs, /on\?\.\("entry_payload"/);
+  assert.match(appJs, /Review the proposal before running the checkpoint/);
+  assert.match(appJs, /window\.confirm\("Replace your unsaved edits/);
+});
+
 test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
   assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
   for (const edge of ["top", "right", "bottom", "left"]) {

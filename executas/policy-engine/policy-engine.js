@@ -29,6 +29,7 @@ const MANIFEST = {
         { name: "amount", type: "number", description: "Financial amount in USD when relevant.", required: false, default: 0 },
         { name: "recipient", type: "string", description: "External recipient or audience when relevant.", required: false, default: "" },
         { name: "evidence", type: "array", description: "Evidence labels or references supporting the action.", required: false, default: [] },
+        { name: "permissions", type: "array", description: "Requested permissions or scopes for the action.", required: false, default: [] },
         { name: "rollback_plan", type: "string", description: "How the action can be reversed safely.", required: false, default: "" }
       ]
     }
@@ -74,6 +75,12 @@ function evaluateAction(raw = {}, now = new Date()) {
     evidence: Array.isArray(raw.evidence)
       ? raw.evidence.map(normalizeText).filter(Boolean)
       : normalizeText(raw.evidence)
+          .split(/[,\n]/)
+          .map((item) => item.trim())
+          .filter(Boolean),
+    permissions: Array.isArray(raw.permissions)
+      ? raw.permissions.map(normalizeText).filter(Boolean)
+      : normalizeText(raw.permissions)
           .split(/[,\n]/)
           .map((item) => item.trim())
           .filter(Boolean),

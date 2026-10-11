@@ -88,3 +88,4 @@ The UI also supports a standalone browser preview. Outside the Anna runtime, it 
 - Evaluation failures never imply permission to execute.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [DEMO.md](DEMO.md), and [SUBMISSION.md](SUBMISSION.md).
+See [docs/entry-payload.md](docs/entry-payload.md) for the versioned Anna launch and update payload.

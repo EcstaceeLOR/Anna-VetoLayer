@@ -257,7 +257,7 @@ function evaluateAction(raw = {}, now = new Date()) {
   const receiptId = `rcpt_${crypto.randomUUID()}`;
 
   const receipt = {
-    schema_version: "1.0",
+    schema_version: "1.1",
     receipt_id: receiptId,
     request_id: requestId,
     evaluated_at: evaluatedAt,
@@ -280,6 +280,7 @@ function evaluateAction(raw = {}, now = new Date()) {
   };
 
   receipt.integrity = {
+    format: "anna-vetolayer.integrity.v1",
     algorithm: "sha256",
     digest: crypto.createHash("sha256").update(canonicalJson(receipt)).digest("hex")
   };

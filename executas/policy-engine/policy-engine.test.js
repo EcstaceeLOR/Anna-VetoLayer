@@ -19,6 +19,7 @@ test("allows a low-risk read", () => {
   const result = evaluateAction(base, new Date("2026-10-11T10:00:00.000Z"));
   assert.equal(result.outcome, "ALLOW");
   assert.equal(result.hard_block, false);
+  assert.equal(result.integrity.format, "anna-vetolayer.integrity.v1");
   assert.match(result.integrity.digest, /^[a-f0-9]{64}$/);
 });
 

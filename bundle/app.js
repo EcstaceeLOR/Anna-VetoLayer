@@ -3,6 +3,7 @@ const EXECUTA_TOOL_ID =
   window.__ANNA_TOOL_IDS__?.[EXECUTA_HANDLE] || "tool-dev-anna-vetolayer-policy-engine";
 const STORAGE_KEY = "receipts/index";
 const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
+const chatArtifact = window.AnnaVetoLayerChat;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -557,13 +558,27 @@ function renderReceipts() {
 async function sendCurrentToChat() {
   const receipt = state.currentReceipt;
   if (!receipt) return;
-  if (!state.anna?.chat?.write_message) {
-    showToast("Chat sharing is available inside Anna.");
+  const button = $("send-to-chat");
+  if (!state.anna?.chat?.append_artifact || !chatArtifact) {
+    showToast("Conversation handoff is unavailable in this runtime.");
     return;
   }
-  const content = `Anna VetoLayer decision: **${receipt.outcome}**\n\n${receipt.action.actor} proposed \`${receipt.action.operation}\` on \`${receipt.action.target}\` (${receipt.action.environment}). Risk: ${receipt.risk_score}/100.\n\n${receipt.contextual_analysis?.summary || receipt.summary}\n\nReceipt: \`${receipt.receipt_id}\``;
-  await state.anna.chat.write_message({ role: "assistant", content });
-  showToast("Decision sent to the Anna conversation.");
+  const originalLabel = button.textContent;
+  button.disabled = true;
+  button.textContent = "Sharing…";
+  try {
+    const response = await state.anna.chat.append_artifact({
+      artifact: chatArtifact.createReceiptArtifact(receipt)
+    });
+    if (!response?.artifact_id) throw new Error("Anna did not confirm the conversation card.");
+    showToast("Transient decision card added to this conversation.");
+  } catch (error) {
+    console.warn("Conversation artifact handoff failed.", error);
+    showToast(chatArtifact.describeHandoffError(error));
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
 }
 
 function exportCurrentReceipt() {
@@ -622,7 +637,7 @@ function bindEvents() {
     await navigator.clipboard.writeText(state.currentReceipt?.receipt_id || "");
     showToast("Receipt ID copied.");
   });
-  $("send-to-chat").addEventListener("click", () => sendCurrentToChat().catch((error) => showToast(error.message || error)));
+  $("send-to-chat").addEventListener("click", sendCurrentToChat);
   $("export-receipt").addEventListener("click", exportCurrentReceipt);
   $("clear-data").addEventListener("click", clearData);
 }

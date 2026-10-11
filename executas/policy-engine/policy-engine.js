@@ -62,6 +62,12 @@ function createFinding(id, status, severity, summary, source = "deterministic") 
 }
 
 function evaluateAction(raw = {}, now = new Date()) {
+  const policy = raw.policy && typeof raw.policy === "object" ? raw.policy : null;
+  const rules = policy?.rules || {};
+  const reviewAmount = Number.isFinite(Number(rules.review_amount)) && Number(rules.review_amount) >= 0 && Number(rules.review_amount) < 10000 ? Number(rules.review_amount) : 500;
+  const requireRollback = rules.require_rollback_in_production !== false;
+  const requireEvidence = rules.require_evidence_in_production !== false;
+  const reviewExternalCommunication = rules.external_communication_review !== false;
   const action = {
     actor: normalizeText(raw.actor) || "Unknown agent",
     tool: normalizeText(raw.tool) || "unknown-tool",
@@ -143,14 +149,14 @@ function evaluateAction(raw = {}, now = new Date()) {
         "The proposed amount exceeds the single-action safety cap of $10,000."
       )
     );
-  } else if (action.amount >= 500) {
-    riskScore += action.amount >= 5000 ? 48 : 30;
+  } else if (action.amount >= reviewAmount) {
+    riskScore += action.amount >= Math.max(5000, reviewAmount * 10) ? 48 : 30;
     findings.push(
       createFinding(
         "review-financial-threshold",
         "uncertain",
-        action.amount >= 5000 ? "high" : "medium",
-        "The amount crosses the human-review threshold of $500."
+        action.amount >= Math.max(5000, reviewAmount * 10) ? "high" : "medium",
+        `The amount crosses the active human-review threshold of $${reviewAmount}.`
       )
     );
   }
@@ -183,7 +189,7 @@ function evaluateAction(raw = {}, now = new Date()) {
         "The action targets production and requires stronger evidence."
       )
     );
-    if (mutatingOperation && !action.rollback_plan) {
+    if (requireRollback && mutatingOperation && !action.rollback_plan) {
       missingEvidence.push("rollback-plan");
       findings.push(
         createFinding(
@@ -194,7 +200,7 @@ function evaluateAction(raw = {}, now = new Date()) {
         )
       );
     }
-    if (mutatingOperation && action.evidence.length === 0) {
+    if (requireEvidence && mutatingOperation && action.evidence.length === 0) {
       missingEvidence.push("verified-change-evidence");
       findings.push(
         createFinding(
@@ -207,7 +213,7 @@ function evaluateAction(raw = {}, now = new Date()) {
     }
   }
 
-  if (action.recipient && action.impact === "communication") {
+  if (reviewExternalCommunication && action.recipient && action.impact === "communication") {
     riskScore += 18;
     findings.push(
       createFinding(
@@ -256,6 +262,7 @@ function evaluateAction(raw = {}, now = new Date()) {
     request_id: requestId,
     evaluated_at: evaluatedAt,
     engine_version: VERSION,
+    policy_version: policy?.revision ? `${policy.policy_id || "policy"}@${policy.revision}` : "core@1",
     outcome,
     hard_block: hardBlock,
     requires_context: requiresContext,

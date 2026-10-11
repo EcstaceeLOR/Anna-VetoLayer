@@ -89,6 +89,12 @@ test("deployed runtime failures fail closed instead of using preview decisions",
   assert.match(appJs, /report_error/);
 });
 
+test("Policy Studio is versioned, validates activation, and cannot alter hard blocks", () => {
+  assert.match(html, /src="policy-studio\.js"/);
+  assert.match(appJs, /policyStudio\.activate/);
+  assert.match(appJs, /key: "policies\/active"/);
+});
+
 test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
   assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
   for (const edge of ["top", "right", "bottom", "left"]) {

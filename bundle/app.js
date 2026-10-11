@@ -7,6 +7,7 @@ const chatArtifact = window.AnnaVetoLayerChat;
 const entryPayload = window.AnnaVetoLayerEntryPayload;
 const reviewResolution = window.AnnaVetoLayerReviewResolution;
 const runtimeError = window.AnnaVetoLayerRuntimeError;
+const policyStudio = window.AnnaVetoLayerPolicyStudio;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -17,7 +18,8 @@ const state = {
   receiptFilter: "ALL",
   formDirty: false,
   entryPayloadHash: null,
-  deployedRuntime: new URLSearchParams(window.location.search).has("wid")
+  deployedRuntime: new URLSearchParams(window.location.search).has("wid"),
+  activePolicy: policyStudio?.create("production") || null
 };
 
 const scenarios = {
@@ -65,7 +67,8 @@ const scenarios = {
 const pageMeta = {
   evaluate: ["DECISION CHECKPOINT", "Evaluate an action"],
   reviews: ["HUMAN IN THE LOOP", "Review queue"],
-  receipts: ["AUDITABLE BY DEFAULT", "Decision receipts"]
+  receipts: ["AUDITABLE BY DEFAULT", "Decision receipts"],
+  policies: ["VERSIONED CONTROLS", "Policy Studio"]
 };
 
 function escapeHtml(value) {
@@ -306,6 +309,7 @@ function localPolicyEvaluation(action) {
     request_id: uid("req"),
     evaluated_at: new Date().toISOString(),
     engine_version: "preview-0.1.0",
+    policy_version: state.activePolicy?.revision ? `${state.activePolicy.policy_id}@${state.activePolicy.revision}` : "core@1",
     outcome,
     hard_block: hardBlock,
     requires_context: requiresContext,
@@ -336,7 +340,7 @@ async function runPolicy(action) {
   let lastError;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const raw = await state.anna.tools.invoke({ tool_id: EXECUTA_TOOL_ID, method: "evaluate_action", args: action, timeoutMs: 15000 });
+      const raw = await state.anna.tools.invoke({ tool_id: EXECUTA_TOOL_ID, method: "evaluate_action", args: { ...action, policy: state.activePolicy }, timeoutMs: 15000 });
       return normalizePolicyResult(raw);
     } catch (error) {
       lastError = error;
@@ -768,6 +772,28 @@ function bindEvents() {
   $("send-to-chat").addEventListener("click", sendCurrentToChat);
   $("export-receipt").addEventListener("click", exportCurrentReceipt);
   $("clear-data").addEventListener("click", clearData);
+  $("policy-template").addEventListener("change", (event) => {
+    const next = policyStudio.create(event.target.value, (state.activePolicy?.revision || 0) + 1);
+    $("policy-name").value = next.name;
+    $("policy-json").value = JSON.stringify(next, null, 2);
+  });
+  $("simulate-policy").addEventListener("click", () => {
+    try {
+      const candidate = JSON.parse($("policy-json").value);
+      const checked = policyStudio.validate(candidate);
+      $("policy-result").textContent = checked.ok ? `Simulation valid — no receipt created. Changes: ${JSON.stringify(policyStudio.diff(state.activePolicy, candidate))}` : checked.errors.join(" ");
+    } catch { $("policy-result").textContent = "Simulation failed: policy JSON is invalid."; }
+  });
+  $("activate-policy").addEventListener("click", async () => {
+    try {
+      const candidate = JSON.parse($("policy-json").value);
+      const activated = policyStudio.activate(candidate, state.activePolicy);
+      if (!activated.ok) { $("policy-result").textContent = activated.errors.join(" "); return; }
+      state.activePolicy = activated.value;
+      if (state.anna?.storage) await state.anna.storage.set({ key: "policies/active", value: state.activePolicy, metadata: { schema: policyStudio.VERSION }, tags: ["active-policy"] });
+      $("policy-result").textContent = `Activated ${state.activePolicy.policy_id}@${state.activePolicy.revision}. Diff: ${JSON.stringify(state.activePolicy.changes)}`;
+    } catch (error) { $("policy-result").textContent = `Activation failed: ${error.message || "invalid policy"}`; }
+  });
 }
 
 async function init() {
@@ -777,6 +803,10 @@ async function init() {
   renderCounts();
   renderReviews();
   renderReceipts();
+  if (policyStudio) {
+    $("policy-name").value = state.activePolicy.name;
+    $("policy-json").value = JSON.stringify(state.activePolicy, null, 2);
+  }
 }
 
 init();

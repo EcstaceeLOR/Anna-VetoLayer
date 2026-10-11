@@ -5,6 +5,7 @@ const STORAGE_KEY = "receipts/index";
 const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
 const chatArtifact = window.AnnaVetoLayerChat;
 const entryPayload = window.AnnaVetoLayerEntryPayload;
+const reviewResolution = window.AnnaVetoLayerReviewResolution;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -523,9 +524,11 @@ function renderReviews() {
     $("review-list").innerHTML = '<div class="empty-state">No unresolved actions. New REVIEW decisions will appear here.</div>';
     return;
   }
-  $("review-list").innerHTML = reviews
-    .map(
-      (receipt) => `
+  $("review-list").innerHTML = reviews.map((receipt) => {
+    const requirements = receipt.missing_evidence || [];
+    const highRisk = reviewResolution?.needsHighRiskAcknowledgement(receipt);
+    const fields = requirements.map((requirement) => `<label><span>${escapeHtml(requirement.replaceAll("-", " "))}</span><textarea class="review-evidence" data-requirement="${escapeHtml(requirement)}" aria-label="Evidence for ${escapeHtml(requirement)}" placeholder="Provide the evidence or updated action detail that resolves this requirement."></textarea></label>`).join("");
+    return `
       <article class="review-card" data-receipt-id="${escapeHtml(receipt.receipt_id)}">
         <div>
           <span class="eyebrow">${escapeHtml(receipt.action.environment)} · RISK ${escapeHtml(receipt.risk_score)}</span>
@@ -534,38 +537,81 @@ function renderReviews() {
           <div class="review-meta">
             <span>Actor: ${escapeHtml(receipt.action.actor)}</span>
             <span>Tool: ${escapeHtml(receipt.action.tool)}</span>
-            <span>${escapeHtml(receipt.missing_evidence.length)} evidence gap${receipt.missing_evidence.length === 1 ? "" : "s"}</span>
+            <span>${escapeHtml(requirements.length)} evidence gap${requirements.length === 1 ? "" : "s"}</span>
           </div>
         </div>
         <div class="review-controls">
-          <textarea class="review-note" aria-label="Reviewer evidence or rationale" placeholder="Add evidence or explain the resolution..."></textarea>
+          <p class="review-help">Approval requires a rationale, evidence for every open requirement, and a fresh deterministic policy check. A hard BLOCK cannot be approved.</p>
+          <div class="review-requirements">${fields}</div>
+          <textarea class="review-rationale" aria-label="Reviewer rationale" placeholder="Explain why this resolution is safe and justified."></textarea>
+          ${highRisk ? '<label class="review-ack"><input class="review-high-risk-ack" type="checkbox" /> <span>I acknowledge this is a high-risk action and that the structured evidence above was reviewed.</span></label>' : ""}
           <div class="review-actions">
-            <button class="review-action approve" type="button" data-resolution="ALLOW">Approve with evidence</button>
+            <button class="review-action approve" type="button" data-resolution="ALLOW">Approve after re-check</button>
             <button class="review-action block" type="button" data-resolution="BLOCK">Block action</button>
+            <button class="review-action request-changes" type="button" data-resolution="REQUEST_CHANGES">Keep open for request changes</button>
           </div>
         </div>
-      </article>`
-    )
-    .join("");
+      </article>`;
+  }).join("");
 }
 
 async function resolveReview(card, resolution) {
-  const note = card.querySelector(".review-note").value.trim();
-  if (note.length < 8) {
-    showToast("Add a short evidence note or rationale first.");
-    card.querySelector(".review-note").focus();
-    return;
-  }
   const parent = state.receipts.find((item) => item.receipt_id === card.dataset.receiptId);
   if (!parent) return;
+  if (reviewResolution.alreadyResolved(state.receipts, parent.receipt_id)) {
+    showToast("This review was already resolved. Refresh the queue.");
+    renderReviews();
+    return;
+  }
+  if (resolution === "REQUEST_CHANGES") {
+    showToast("Review remains open. Update the request and submit it again when ready.");
+    return;
+  }
+  if (!reviewResolution) {
+    showToast("Structured review controls are unavailable in this runtime.");
+    return;
+  }
+  const review = {
+    rationale: card.querySelector(".review-rationale").value,
+    evidence: Object.fromEntries([...card.querySelectorAll(".review-evidence")].map((input) => [input.dataset.requirement, input.value])),
+    acknowledged_high_risk: Boolean(card.querySelector(".review-high-risk-ack")?.checked)
+  };
+  const checked = reviewResolution.validate(parent, resolution, review);
+  if (!checked.ok) {
+    showToast(checked.errors[0]);
+    card.querySelector(".review-rationale, .review-evidence, .review-high-risk-ack")?.focus();
+    return;
+  }
+
+  let reevaluation = null;
+  let action = parent.action;
+  if (resolution === "ALLOW") {
+    action = reviewResolution.applyEvidence(parent.action, checked.value.evidence);
+    try {
+      reevaluation = await runPolicy(action);
+    } catch (error) {
+      showToast(`Policy re-check failed: ${error.message || error}`);
+      return;
+    }
+    if (reevaluation.hard_block) {
+      showToast("Approval is unavailable: the policy re-check produced an authoritative BLOCK.");
+      return;
+    }
+  }
   const child = {
     ...parent,
     receipt_id: uid("rcpt"),
     parent_receipt_id: parent.receipt_id,
     outcome: resolution,
     decided_at: new Date().toISOString(),
-    human_resolution: { outcome: resolution, note, resolved_at: new Date().toISOString() },
-    summary: resolution === "ALLOW" ? "A human reviewer supplied evidence and approved the action." : "A human reviewer blocked the action.",
+    action,
+    findings: reevaluation?.findings || parent.findings,
+    missing_evidence: reevaluation?.missing_evidence || [],
+    hard_block: reevaluation?.hard_block || false,
+    requires_context: reevaluation?.requires_context || false,
+    policy_re_evaluation: reevaluation ? { receipt_id: reevaluation.receipt_id, engine_version: reevaluation.engine_version, outcome: reevaluation.outcome, hard_block: reevaluation.hard_block, evaluated_at: reevaluation.evaluated_at } : null,
+    human_resolution: { outcome: resolution, rationale: checked.value.rationale, evidence: checked.value.evidence, acknowledged_high_risk: checked.value.acknowledged_high_risk, reviewer: "current-user", resolved_at: new Date().toISOString() },
+    summary: resolution === "ALLOW" ? "A human reviewer supplied structured evidence and approved after policy re-evaluation." : "A human reviewer blocked the action.",
     integrity: { algorithm: "sha256", digest: "pending" }
   };
   child.integrity.digest = await digestReceipt(child);

@@ -73,6 +73,14 @@ test("bundle loads the versioned entry payload contract and never auto-evaluates
   assert.match(appJs, /window\.confirm\("Replace your unsaved edits/);
 });
 
+test("review approvals use structured evidence and a policy re-evaluation", () => {
+  assert.match(html, /src="review-resolution\.js"/);
+  assert.match(appJs, /reviewResolution\.validate\(parent, resolution, review\)/);
+  assert.match(appJs, /reevaluation = await runPolicy\(action\)/);
+  assert.match(appJs, /reevaluation\.hard_block/);
+  assert.match(appJs, /parent_receipt_id: parent\.receipt_id/);
+});
+
 test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
   assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
   for (const edge of ["top", "right", "bottom", "left"]) {

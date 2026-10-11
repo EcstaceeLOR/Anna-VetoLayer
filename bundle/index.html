@@ -33,6 +33,10 @@
             <span class="nav-icon">≡</span>
             Receipts
           </button>
+          <button class="nav-item" data-view="policies" type="button">
+            <span class="nav-icon">⚙</span>
+            Policy studio
+          </button>
         </nav>
 
         <div class="sidebar-note">
@@ -258,6 +262,19 @@ Two maintainer approvals</textarea>
             <div class="table-empty" id="receipts-empty">No decision receipts yet.</div>
           </div>
         </section>
+
+        <section class="view" id="view-policies">
+          <div class="section-intro"><div><span class="eyebrow">VERSIONED CONTROLS</span><h2>Policy Studio</h2><p>Adjust review thresholds and evidence requirements. Protected hard blocks are always enforced.</p></div></div>
+          <div class="panel policy-studio">
+            <div class="form-grid">
+              <label><span>Template</span><select id="policy-template"><option value="production">Production changes</option><option value="payments">Payments</option><option value="access">Access changes</option><option value="data_export">Data exports</option><option value="communications">External communications</option></select></label>
+              <label><span>Policy name</span><input id="policy-name" /></label>
+              <label class="span-two"><span>Versioned policy JSON</span><textarea id="policy-json" rows="12" aria-describedby="policy-help"></textarea></label>
+            </div>
+            <div class="form-footer"><p id="policy-help">Simulation never creates a Decision Receipt. Activation validates the policy and preserves protected controls.</p><button class="secondary-button" id="simulate-policy" type="button">Simulate</button><button class="primary-button" id="activate-policy" type="button"><span>Validate &amp; activate</span><b>→</b></button></div>
+            <div class="policy-result" id="policy-result" aria-live="polite"></div>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -265,6 +282,7 @@ Two maintainer approvals</textarea>
 
     <script src="anna-tool-ids.js"></script>
     <script src="runtime-error.js"></script>
+    <script src="policy-studio.js"></script>
     <script src="entry-payload.js"></script>
     <script src="review-resolution.js"></script>
     <script src="chat-artifact.js"></script>

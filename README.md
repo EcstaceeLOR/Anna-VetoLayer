@@ -36,6 +36,23 @@ Use the deterministic LLM fixture instead of a live Anna model connection:
 pnpm dev:mock
 ```
 
+## Production Executa releases
+
+The policy engine is shipped as a Node single-executable application, so Marketplace users do not need a local Node or Python installation. The release workflow builds and smoke-tests native artifacts for macOS on Intel and Apple Silicon, Linux x86_64, and Windows x86_64.
+
+To build and verify the artifact for the current machine:
+
+```bash
+pnpm install
+pnpm release:executa
+```
+
+The command creates a platform archive and SHA-256 sidecar in `executas/policy-engine/dist/`, extracts it into a clean directory, then proves `describe`, `health`, and `evaluate_action` all work from the packaged binary. Release artifacts are intentionally untracked.
+
+GitHub Actions runs the complete native matrix for every pull request and publishes all four archives to a GitHub Release when a `v*` tag is pushed. Anna's binary profile uses direct uploads through `anna-app apps cut`, which freezes the archive hashes with the App version. Before the first binary upload, mint the production Executa ID and configure the bundled Executa in the Anna Developer Console; never replace the minted ID manually.
+
+For zero-secret binary upload, register the release workflow as an Anna trusted publisher and use the CLI's OIDC binary-upload flow. App lifecycle commands such as `apps cut`, `submit-review`, and `release` still require the maintainer's Anna credentials. To roll back, cut and release a new App version pinned to the previous verified Executa version rather than overwriting an existing binary.
+
 ## Project structure
 
 ```text
@@ -59,7 +76,7 @@ The UI also supports a standalone browser preview. Outside the Anna runtime, it 
 - Bundled Executa through `anna.tools.invoke`
 - Contextual AI through `anna.llm.complete`
 - Decision Receipt persistence through `anna.storage`
-- Conversation handoff through `anna.chat.write_message`
+- Conversation handoff through Anna chat artifacts
 - Responsive desktop and mobile App UI
 
 ## Safety invariants

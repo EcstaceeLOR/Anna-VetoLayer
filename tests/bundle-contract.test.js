@@ -10,6 +10,9 @@ const html = fs.readFileSync(path.join(root, "bundle", "index.html"), "utf8");
 const appJs = fs.readFileSync(path.join(root, "bundle", "app.js"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 const app = JSON.parse(fs.readFileSync(path.join(root, "app.json"), "utf8"));
+const executa = JSON.parse(
+  fs.readFileSync(path.join(root, app.bundled_executas["policy-engine"].path, "executa.json"), "utf8")
+);
 
 test("every DOM id used by app.js exists exactly once", () => {
   const referenced = [...appJs.matchAll(/\$\("([a-z0-9-]+)"\)/g)].map((match) => match[1]);
@@ -30,7 +33,22 @@ test("bundle and Executa handles resolve", () => {
   const handle = manifest.required_executas[0].tool_id.replace("bundled:", "");
   assert.ok(app.bundled_executas[handle]);
   assert.ok(fs.existsSync(path.join(root, app.bundled_executas[handle].path, "executa.json")));
-  assert.ok(manifest.ui.host_api.tools.includes(`required:bundled:${handle}`));
+  assert.ok(manifest.ui.host_api.tools.includes("required:*"));
+});
+
+test("Policy Engine has a complete binary release profile", () => {
+  assert.equal(executa.distribution.active, "binary");
+  const artifacts = executa.distribution.profiles.binary.binary_artifacts;
+  assert.deepEqual(Object.keys(artifacts).sort(), [
+    "darwin-arm64",
+    "darwin-x86_64",
+    "linux-x86_64",
+    "windows-x86_64"
+  ]);
+  for (const [platform, artifact] of Object.entries(artifacts)) {
+    assert.match(artifact.path, /dist\/anna-vetolayer-policy-engine-\{version\}-.+/);
+    assert.ok(artifact.entrypoint.startsWith("bin/"), `${platform} needs an archive entrypoint`);
+  }
 });
 
 test("bundle uses external scripts only", () => {

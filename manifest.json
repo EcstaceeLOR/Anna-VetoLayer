@@ -39,7 +39,7 @@
     ],
     "form_factors": ["desktop", "mobile"],
     "host_api": {
-      "tools": ["required:bundled:policy-engine"],
+      "tools": ["required:*"],
       "llm": ["complete"],
       "storage": ["get", "set", "list", "delete"],
       "chat": ["write_message"],

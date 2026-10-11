@@ -2,12 +2,15 @@ const EXECUTA_HANDLE = "policy-engine";
 const EXECUTA_TOOL_ID =
   window.__ANNA_TOOL_IDS__?.[EXECUTA_HANDLE] || "tool-dev-anna-vetolayer-policy-engine";
 const STORAGE_KEY = "receipts/index";
+const FUNNEL_KEY = "diagnostics/funnel";
+const ONBOARDING_KEY = "onboarding/seen";
 const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
 const chatArtifact = window.AnnaVetoLayerChat;
 const entryPayload = window.AnnaVetoLayerEntryPayload;
 const reviewResolution = window.AnnaVetoLayerReviewResolution;
 const runtimeError = window.AnnaVetoLayerRuntimeError;
 const policyStudio = window.AnnaVetoLayerPolicyStudio;
+const growthFunnel = window.AnnaVetoLayerGrowthFunnel;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -18,6 +21,7 @@ const state = {
   receiptFilter: "ALL",
   formDirty: false,
   entryPayloadHash: null,
+  onboardingSeen: false,
   deployedRuntime: new URLSearchParams(window.location.search).has("wid"),
   activePolicy: policyStudio?.create("production") || null
 };
@@ -167,6 +171,54 @@ async function saveReceipts() {
   } catch {
     return false;
   }
+}
+
+async function recordFunnel(stage, persisted = true) {
+  if (!growthFunnel?.shouldRecord(state.runtimeMode, stage, persisted) || !state.anna?.storage) return;
+  try {
+    const stored = await state.anna.storage.get({ key: FUNNEL_KEY });
+    const events = stored.exists && Array.isArray(stored.value) ? stored.value : [];
+    events.push(growthFunnel.create(stage));
+    await state.anna.storage.set({
+      key: FUNNEL_KEY,
+      value: events.slice(-50),
+      metadata: { product: "anna-vetolayer", schema: growthFunnel.VERSION },
+      tags: ["privacy-safe-diagnostics"]
+    });
+  } catch (error) {
+    console.warn("Anna diagnostics write failed.", runtimeError?.code(error));
+  }
+}
+
+async function initialiseOnboarding() {
+  const banner = $("onboarding");
+  if (state.runtimeMode !== "live" || !state.anna?.storage) return;
+  try {
+    const stored = await state.anna.storage.get({ key: ONBOARDING_KEY });
+    state.onboardingSeen = stored.exists && stored.value === true;
+  } catch (error) {
+    console.warn("Anna onboarding read failed.", runtimeError?.code(error));
+  }
+  banner.hidden = state.onboardingSeen;
+}
+
+async function startOnboarding() {
+  populateScenario("deploy");
+  $("onboarding").hidden = true;
+  state.onboardingSeen = true;
+  if (state.anna?.storage) {
+    try {
+      await state.anna.storage.set({
+        key: ONBOARDING_KEY,
+        value: true,
+        metadata: { product: "anna-vetolayer", schema: "1.0" },
+        tags: ["onboarding"]
+      });
+    } catch (error) {
+      console.warn("Anna onboarding write failed.", runtimeError?.code(error));
+    }
+  }
+  $("action-form").requestSubmit();
 }
 
 function switchView(view) {
@@ -518,8 +570,10 @@ async function evaluate(event) {
   button.disabled = true;
   showProgress();
   try {
+    await recordFunnel("started");
     const action = formPayload(event.currentTarget);
     const policy = await runPolicy(action);
+    await recordFunnel("tool_success");
     let context = null;
     if (policy.requires_context && !policy.hard_block) {
       setProgress("context", "Asking Anna for context", "Interpreting intent, impact, and ambiguity without weakening hard policy.");
@@ -536,6 +590,7 @@ async function evaluate(event) {
     await new Promise((resolve) => setTimeout(resolve, 280));
     renderDecision(receipt);
     renderCounts();
+    await recordFunnel("receipt_viewed", persisted);
     showToast(persisted ? `${receipt.outcome} receipt created` : `${receipt.outcome} receipt created but not persisted. Export it before leaving.`);
   } catch (error) {
     console.error(error);
@@ -749,6 +804,7 @@ function bindEvents() {
   document.querySelectorAll(".demo-chip").forEach((element) => {
     element.addEventListener("click", () => populateScenario(element.dataset.scenario));
   });
+  $("start-onboarding").addEventListener("click", startOnboarding);
   $("action-form").addEventListener("input", () => {
     state.formDirty = true;
   });
@@ -800,6 +856,8 @@ async function init() {
   bindEvents();
   await connectAnna();
   await loadReceipts();
+  await recordFunnel("opened");
+  await initialiseOnboarding();
   renderCounts();
   renderReviews();
   renderReceipts();

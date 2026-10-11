@@ -168,6 +168,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .status-dot.is-preview { background: var(--blue); box-shadow: 0 0 12px rgba(141, 184, 255, .55); }
 
 .main-content { min-width: 0; padding: var(--safe-top) 36px calc(48px + var(--safe-bottom)); }
+.onboarding { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 24px 0 0; padding: 20px 22px; border: 1px solid rgba(216,255,97,.3); border-radius: 12px; background: rgba(216,255,97,.05); }
+.onboarding h2 { margin: 5px 0; font-size: 18px; }.onboarding p { max-width: 720px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }.onboarding-privacy { margin-top: 6px !important; color: var(--muted-2) !important; }
 
 .topbar {
   display: flex;
@@ -487,6 +489,7 @@ input::placeholder, textarea::placeholder { color: #4e5662; }
   .nav-item { width: 44px; }
   .runtime-card { margin: 0 0 0 6px; }
   .main-content { padding: var(--safe-top) 15px calc(30px + var(--safe-bottom)); }
+  .onboarding { align-items: stretch; flex-direction: column; }
   .topbar { min-height: 70px; }
   .policy-chip { display: none; }
   .intro-row { align-items: flex-start; padding-top: 25px; }

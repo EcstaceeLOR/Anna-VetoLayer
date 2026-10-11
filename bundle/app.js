@@ -6,6 +6,7 @@ const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
 const chatArtifact = window.AnnaVetoLayerChat;
 const entryPayload = window.AnnaVetoLayerEntryPayload;
 const reviewResolution = window.AnnaVetoLayerReviewResolution;
+const runtimeError = window.AnnaVetoLayerRuntimeError;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -15,7 +16,8 @@ const state = {
   currentReceipt: null,
   receiptFilter: "ALL",
   formDirty: false,
-  entryPayloadHash: null
+  entryPayloadHash: null,
+  deployedRuntime: new URLSearchParams(window.location.search).has("wid")
 };
 
 const scenarios = {
@@ -107,9 +109,13 @@ async function connectAnna() {
     applyEntryPayload(state.anna.entryPayload, "launch");
     state.anna.on?.("entry_payload", (payload) => applyEntryPayload(payload, "updated request"));
   } catch (error) {
-    console.info("Anna runtime unavailable; using standalone preview mode.", error?.message || error);
+    console.warn("Anna runtime connection failed.", runtimeError?.code(error));
     state.anna = null;
-    setRuntimeStatus("preview", "Standalone preview", "Local policy + browser storage");
+    if (state.deployedRuntime) {
+      setRuntimeStatus("error", "Anna connection failed", "No decision can be issued until the runtime reconnects");
+    } else {
+      setRuntimeStatus("preview", "Standalone preview", "Local policy + browser storage");
+    }
   }
 }
 
@@ -120,7 +126,12 @@ async function loadReceipts() {
       state.receipts = stored.exists && Array.isArray(stored.value) ? stored.value : [];
       return;
     } catch (error) {
-      console.warn("Anna storage read failed; using local fallback.", error);
+      console.warn("Anna storage read failed.", runtimeError?.code(error));
+      if (state.deployedRuntime) {
+        state.receipts = [];
+        showToast("Stored receipts are unavailable in Anna right now.");
+        return;
+      }
     }
   }
   try {
@@ -141,12 +152,18 @@ async function saveReceipts() {
         metadata: { product: "anna-vetolayer", schema: "1.0" },
         tags: ["decision-receipts"]
       });
-      return;
+      return true;
     } catch (error) {
-      console.warn("Anna storage write failed; using local fallback.", error);
+      console.warn("Anna storage write failed.", runtimeError?.code(error));
+      if (state.deployedRuntime) return false;
     }
   }
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.receipts));
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.receipts));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function switchView(view) {
@@ -310,14 +327,23 @@ function normalizePolicyResult(raw) {
 }
 
 async function runPolicy(action) {
-  if (!state.anna?.tools) return localPolicyEvaluation(action);
-  const raw = await state.anna.tools.invoke({
-    tool_id: EXECUTA_TOOL_ID,
-    method: "evaluate_action",
-    args: action,
-    timeoutMs: 15000
-  });
-  return normalizePolicyResult(raw);
+  if (!state.anna?.tools) {
+    if (state.runtimeMode === "preview") return localPolicyEvaluation(action);
+    const error = new Error("Anna policy runtime is unavailable.");
+    error.code = "agent_unavailable";
+    throw error;
+  }
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const raw = await state.anna.tools.invoke({ tool_id: EXECUTA_TOOL_ID, method: "evaluate_action", args: action, timeoutMs: 15000 });
+      return normalizePolicyResult(raw);
+    } catch (error) {
+      lastError = error;
+      if (!runtimeError?.describe(error).retryable || attempt === 1) throw error;
+    }
+  }
+  throw lastError;
 }
 
 function parseJsonText(text) {
@@ -333,6 +359,9 @@ function parseJsonText(text) {
 
 async function runContextualReview(policy) {
   if (!state.anna?.llm) {
+    if (state.runtimeMode !== "preview") {
+      return { outcome: "REVIEW", confidence: 0, summary: "Contextual analysis is unavailable; human review is required.", risk_flags: ["contextual-analysis-unavailable"], requirements: ["Restore Anna contextual analysis before approving"], model: "unavailable" };
+    }
     return {
       outcome: "REVIEW",
       confidence: 0.78,
@@ -367,7 +396,12 @@ async function runContextualReview(policy) {
     },
     { timeoutMs: 60000 }
   );
-  const result = parseJsonText(response.content?.text);
+  let result;
+  try {
+    result = parseJsonText(response.content?.text);
+  } catch (error) {
+    return { outcome: "REVIEW", confidence: 0, summary: "Contextual analysis returned invalid data; human review is required.", risk_flags: ["malformed-llm-output"], requirements: ["Restore contextual analysis before approving"], model: "unavailable" };
+  }
   result.model = response.model || "Anna AI";
   return result;
 }
@@ -445,7 +479,8 @@ function renderDecision(receipt) {
   verdict.className = `verdict ${receipt.outcome.toLowerCase()}`;
   $("risk-score").textContent = `Risk ${receipt.risk_score}/100`;
   $("result-summary").textContent = receipt.outcome === "ALLOW" ? "Action may proceed." : receipt.outcome === "BLOCK" ? "Action must not execute." : "Human review required.";
-  $("result-context").textContent = receipt.contextual_analysis?.summary || receipt.summary;
+  const persistenceNote = receipt.persistence === "unpersisted" ? " This receipt could not be saved to Anna; export it before leaving." : "";
+  $("result-context").textContent = `${receipt.contextual_analysis?.summary || receipt.summary}${persistenceNote}`;
   $("receipt-id").textContent = receipt.receipt_id;
 
   const allFindings = [
@@ -490,17 +525,21 @@ async function evaluate(event) {
     }
     setProgress("receipt", "Sealing decision receipt", "Recording inputs, findings, lineage, and integrity metadata.");
     const receipt = await finalizeReceipt(policy, context);
+    receipt.persistence = "pending";
     state.receipts.unshift(receipt);
-    await saveReceipts();
+    const persisted = await saveReceipts();
+    receipt.persistence = persisted ? "persisted" : "unpersisted";
     await new Promise((resolve) => setTimeout(resolve, 280));
     renderDecision(receipt);
     renderCounts();
-    showToast(`${receipt.outcome} receipt created`);
+    showToast(persisted ? `${receipt.outcome} receipt created` : `${receipt.outcome} receipt created but not persisted. Export it before leaving.`);
   } catch (error) {
     console.error(error);
+    state.anna?.window?.report_error?.({ message: "Anna VetoLayer evaluation failed", context: { code: runtimeError?.code(error) || "internal_error" } }).catch(() => undefined);
     $("decision-progress").hidden = true;
     $("decision-empty").hidden = false;
-    showToast(`Evaluation failed: ${error.message || error}`);
+    const details = runtimeError?.describe(error) || { message: "No decision was issued. Retry when Anna is available." };
+    showToast(details.message);
   } finally {
     button.disabled = false;
   }
@@ -615,8 +654,9 @@ async function resolveReview(card, resolution) {
     integrity: { algorithm: "sha256", digest: "pending" }
   };
   child.integrity.digest = await digestReceipt(child);
+  child.persistence = "pending";
   state.receipts.unshift(child);
-  await saveReceipts();
+  child.persistence = (await saveReceipts()) ? "persisted" : "unpersisted";
   renderReviews();
   showToast(`Review resolved as ${resolution}`);
 }

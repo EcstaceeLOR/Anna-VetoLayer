@@ -26,6 +26,7 @@ Prerequisites:
 pnpm install
 pnpm validate
 pnpm test
+pnpm test:anna
 pnpm smoke
 pnpm dev
 ```
@@ -35,6 +36,8 @@ Use the deterministic LLM fixture instead of a live Anna model connection:
 ```bash
 pnpm dev:mock
 ```
+
+`pnpm test:anna` uses Anna's official in-process bundle harness. It verifies the ACL-gated policy, LLM, APS, chat-artifact, and entry-payload surfaces without requiring a running iframe. The release checklist still requires the exact release candidate to be exercised in Anna desktop and mobile before Marketplace submission.
 
 ## Production Executa releases
 
@@ -89,3 +92,4 @@ The UI also supports a standalone browser preview. Outside the Anna runtime, it 
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [DEMO.md](DEMO.md), and [SUBMISSION.md](SUBMISSION.md).
 See [docs/entry-payload.md](docs/entry-payload.md) for the versioned Anna launch and update payload.
+Use [docs/release-review-checklist.md](docs/release-review-checklist.md) against the exact Marketplace release candidate.

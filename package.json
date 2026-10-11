@@ -12,6 +12,7 @@
     "dev:mock": "anna-app dev --mock-llm fixtures/context-review.jsonl",
     "validate": "anna-app validate --strict",
     "test": "node --test executas/policy-engine/policy-engine.test.js tests/*.test.js",
+    "test:anna": "vitest run tests/anna-harness.test.mjs",
     "smoke": "node scripts/smoke-plugin.js",
     "build:executa": "node executas/policy-engine/scripts/build-binary.mjs",
     "package:executa": "node executas/policy-engine/scripts/package-binary.mjs",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@anna-ai/cli": "0.1.58",
-    "postject": "1.0.0-alpha.6"
+    "postject": "1.0.0-alpha.6",
+    "vitest": "3.2.4"
   }
 }

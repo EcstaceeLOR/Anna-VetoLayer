@@ -81,6 +81,14 @@ test("review approvals use structured evidence and a policy re-evaluation", () =
   assert.match(appJs, /parent_receipt_id: parent\.receipt_id/);
 });
 
+test("deployed runtime failures fail closed instead of using preview decisions", () => {
+  assert.match(html, /src="runtime-error\.js"/);
+  assert.match(appJs, /state\.deployedRuntime/);
+  assert.match(appJs, /if \(state\.runtimeMode === "preview"\) return localPolicyEvaluation/);
+  assert.match(appJs, /receipt\.persistence = persisted \? "persisted" : "unpersisted"/);
+  assert.match(appJs, /report_error/);
+});
+
 test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
   assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
   for (const edge of ["top", "right", "bottom", "left"]) {

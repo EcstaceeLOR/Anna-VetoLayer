@@ -24,5 +24,9 @@
     "@anna-ai/cli": "0.1.58",
     "postject": "1.0.0-alpha.6",
     "vitest": "3.2.4"
+  },
+  "dependencies": {
+    "@clerk/backend": "^3.23.2",
+    "@neondatabase/serverless": "^1.2.0"
   }
 }

@@ -96,3 +96,4 @@ Use [docs/release-review-checklist.md](docs/release-review-checklist.md) against
 See [docs/marketplace-listing.md](docs/marketplace-listing.md) and [docs/release-runbook.md](docs/release-runbook.md) for the listing and account-bound release steps.
 See [docs/growth-launch-checklist.md](docs/growth-launch-checklist.md) for qualified-run outreach and recovery guidance.
 See [docs/receipt-integrity.md](docs/receipt-integrity.md) for canonical receipt verification and lineage semantics.
+See [docs/shared-review-service.md](docs/shared-review-service.md) for the optional multi-user review service and separation-of-duties deployment.

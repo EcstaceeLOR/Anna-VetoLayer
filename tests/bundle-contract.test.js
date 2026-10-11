@@ -8,6 +8,7 @@ const path = require("node:path");
 const root = path.join(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "bundle", "index.html"), "utf8");
 const appJs = fs.readFileSync(path.join(root, "bundle", "app.js"), "utf8");
+const styles = fs.readFileSync(path.join(root, "bundle", "styles.css"), "utf8");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
 const app = JSON.parse(fs.readFileSync(path.join(root, "app.json"), "utf8"));
 const executa = JSON.parse(
@@ -55,4 +56,13 @@ test("bundle uses external scripts only", () => {
   const scriptTags = [...html.matchAll(/<script\b([^>]*)>/gi)].map((match) => match[1]);
   assert.ok(scriptTags.length >= 2);
   assert.ok(scriptTags.every((attributes) => /\bsrc=/.test(attributes)));
+});
+
+test("mobile bundle leaves viewport ownership to Anna and respects shell safe areas", () => {
+  assert.doesNotMatch(html, /<meta\s+name=["']viewport["']/i);
+  for (const edge of ["top", "right", "bottom", "left"]) {
+    assert.match(styles, new RegExp(`safe-area-inset-${edge}`));
+  }
+  assert.match(styles, /min-height:\s*44px/);
+  assert.doesNotMatch(appJs, /\b(?:innerWidth|innerHeight|visualViewport|resizeTo|moveTo)\b/);
 });

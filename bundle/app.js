@@ -1,7 +1,6 @@
 const EXECUTA_HANDLE = "policy-engine";
 const EXECUTA_TOOL_ID =
   window.__ANNA_TOOL_IDS__?.[EXECUTA_HANDLE] || "tool-dev-anna-vetolayer-policy-engine";
-const STORAGE_KEY = "receipts/index";
 const FUNNEL_KEY = "diagnostics/funnel";
 const ONBOARDING_KEY = "onboarding/seen";
 const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
@@ -12,12 +11,16 @@ const runtimeError = window.AnnaVetoLayerRuntimeError;
 const policyStudio = window.AnnaVetoLayerPolicyStudio;
 const growthFunnel = window.AnnaVetoLayerGrowthFunnel;
 const receiptIntegrity = window.AnnaVetoLayerReceiptIntegrity;
+const receiptStorage = window.AnnaVetoLayerReceiptStorage;
 
 const $ = (id) => document.getElementById(id);
 const state = {
   anna: null,
   runtimeMode: "connecting",
   receipts: [],
+  receiptCursor: null,
+  hasMoreReceipts: false,
+  receiptEtags: {},
   currentReceipt: null,
   receiptFilter: "ALL",
   formDirty: false,
@@ -127,11 +130,21 @@ async function connectAnna() {
   }
 }
 
-async function loadReceipts() {
+function sortReceipts(receipts) {
+  return [...receipts].sort((left, right) => new Date(right.decided_at || right.evaluated_at || 0) - new Date(left.decided_at || left.evaluated_at || 0));
+}
+
+async function loadReceipts({ append = false } = {}) {
   if (state.anna?.storage) {
     try {
-      const stored = await state.anna.storage.get({ key: STORAGE_KEY });
-      state.receipts = stored.exists && Array.isArray(stored.value) ? stored.value : [];
+      await receiptStorage.migrateLegacy(state.anna.storage);
+      const page = await receiptStorage.listPage(state.anna.storage, append ? state.receiptCursor : undefined);
+      const known = new Map((append ? state.receipts : []).map((receipt) => [receipt.receipt_id, receipt]));
+      page.receipts.forEach((receipt) => known.set(receipt.receipt_id, receipt));
+      state.receipts = sortReceipts([...known.values()]);
+      state.receiptEtags = { ...state.receiptEtags, ...page.etags };
+      state.receiptCursor = page.nextCursor;
+      state.hasMoreReceipts = Boolean(page.nextCursor);
       return;
     } catch (error) {
       console.warn("Anna storage read failed.", runtimeError?.code(error));
@@ -143,24 +156,18 @@ async function loadReceipts() {
     }
   }
   try {
-    state.receipts = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+    state.receipts = sortReceipts(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]"));
     if (!Array.isArray(state.receipts)) state.receipts = [];
+    state.hasMoreReceipts = false;
   } catch {
     state.receipts = [];
   }
 }
 
-async function saveReceipts() {
-  state.receipts = state.receipts.slice(0, 100);
+async function saveReceipt(receipt) {
   if (state.anna?.storage) {
     try {
-      await state.anna.storage.set({
-        key: STORAGE_KEY,
-        value: state.receipts,
-        metadata: { product: "anna-vetolayer", schema: "1.1" },
-        tags: ["decision-receipts"]
-      });
-      return true;
+      return (await receiptStorage.writeImmutable(state.anna.storage, receipt)).persisted;
     } catch (error) {
       console.warn("Anna storage write failed.", runtimeError?.code(error));
       if (state.deployedRuntime) return false;
@@ -579,9 +586,9 @@ async function evaluate(event) {
     }
     setProgress("receipt", "Sealing decision receipt", "Recording inputs, findings, lineage, and integrity metadata.");
     const receipt = await finalizeReceipt(policy, context);
-    receipt.persistence = "pending";
+    receipt.persistence = "persisted";
     state.receipts.unshift(receipt);
-    const persisted = await saveReceipts();
+    const persisted = await saveReceipt(receipt);
     receipt.persistence = persisted ? "persisted" : "unpersisted";
     await new Promise((resolve) => setTimeout(resolve, 280));
     renderDecision(receipt);
@@ -709,9 +716,9 @@ async function resolveReview(card, resolution) {
     integrity: { format: receiptIntegrity?.FORMAT, algorithm: "sha256", digest: "pending" }
   };
   child.integrity.digest = await receiptIntegrity.digest(child);
-  child.persistence = "pending";
+  child.persistence = "persisted";
   state.receipts.unshift(child);
-  child.persistence = (await saveReceipts()) ? "persisted" : "unpersisted";
+  child.persistence = (await saveReceipt(child)) ? "persisted" : "unpersisted";
   renderReviews();
   showToast(`Review resolved as ${resolution}`);
 }
@@ -719,6 +726,7 @@ async function resolveReview(card, resolution) {
 function renderReceipts() {
   const filtered = state.receiptFilter === "ALL" ? state.receipts : state.receipts.filter((item) => item.outcome === state.receiptFilter);
   $("receipts-empty").hidden = filtered.length > 0;
+  $("receipt-load-more").hidden = !state.hasMoreReceipts;
   $("receipt-rows").innerHTML = filtered
     .map((receipt) => {
       const date = new Date(receipt.decided_at || receipt.evaluated_at);
@@ -776,14 +784,13 @@ async function exportCurrentReceipt() {
 
 async function clearData() {
   if (!confirm("Clear all Anna VetoLayer demo receipts in this app?")) return;
+  const receiptsToDelete = [...state.receipts];
   state.receipts = [];
+  state.receiptCursor = null;
+  state.hasMoreReceipts = false;
   state.currentReceipt = null;
   if (state.anna?.storage) {
-    try {
-      await state.anna.storage.delete({ key: STORAGE_KEY });
-    } catch (error) {
-      if (!String(error?.message || error).includes("not_found")) console.warn(error);
-    }
+    await Promise.all(receiptsToDelete.map((receipt) => state.anna.storage.delete({ key: receiptStorage.keyFor(receipt.receipt_id), if_match: state.receiptEtags[receiptStorage.keyFor(receipt.receipt_id)] }).catch((error) => console.warn("Receipt delete skipped.", runtimeError?.code(error)))));
   }
   localStorage.removeItem(LOCAL_STORAGE_KEY);
   $("decision-result").hidden = true;
@@ -826,6 +833,17 @@ function bindEvents() {
   $("send-to-chat").addEventListener("click", sendCurrentToChat);
   $("export-receipt").addEventListener("click", exportCurrentReceipt);
   $("clear-data").addEventListener("click", clearData);
+  $("load-more-receipts").addEventListener("click", async () => {
+    await loadReceipts({ append: true });
+    renderReceipts();
+  });
+  window.addEventListener("focus", () => {
+    loadReceipts().then(() => {
+      renderCounts();
+      renderReviews();
+      renderReceipts();
+    }).catch((error) => console.warn("Receipt refresh failed.", runtimeError?.code(error)));
+  });
   $("policy-template").addEventListener("change", (event) => {
     const next = policyStudio.create(event.target.value, (state.activePolicy?.revision || 0) + 1);
     $("policy-name").value = next.name;

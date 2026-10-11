@@ -446,6 +446,7 @@ input::placeholder, textarea::placeholder { color: #4e5662; }
 .table-verdict.block { color: var(--block); }
 .receipt-code { color: var(--muted-2); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 .table-empty { padding: 60px; color: var(--muted); text-align: center; }
+.receipt-load-more { padding: 14px; border-top: 1px solid var(--line-soft); text-align: center; }
 
 .toast {
   position: fixed;

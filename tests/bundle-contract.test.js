@@ -102,6 +102,15 @@ test("receipts use a versioned integrity digest rather than an unsupported signa
   assert.doesNotMatch(html, /signed receipt/i);
 });
 
+test("receipt history uses immutable paginated APS records", () => {
+  assert.match(html, /src="receipt-storage\.js"/);
+  assert.match(appJs, /receiptStorage\.migrateLegacy/);
+  assert.match(appJs, /receiptStorage\.listPage/);
+  assert.match(appJs, /receiptStorage\.writeImmutable/);
+  assert.match(appJs, /window\.addEventListener\("focus"/);
+  assert.doesNotMatch(appJs, /state\.receipts = state\.receipts\.slice\(0, 100\)/);
+});
+
 test("onboarding measures only privacy-safe qualified live runs", () => {
   assert.match(html, /id="onboarding"/);
   assert.match(html, /Preview runs are never counted as qualified activity/);

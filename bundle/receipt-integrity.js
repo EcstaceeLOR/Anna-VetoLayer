@@ -16,6 +16,7 @@
   function covered(receipt) {
     const clone = structuredClone(receipt);
     delete clone.integrity;
+    delete clone.persistence;
     return clone;
   }
 

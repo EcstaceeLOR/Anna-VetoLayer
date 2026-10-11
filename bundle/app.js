@@ -4,6 +4,7 @@ const EXECUTA_TOOL_ID =
 const STORAGE_KEY = "receipts/index";
 const LOCAL_STORAGE_KEY = "anna-vetolayer-receipts";
 const chatArtifact = window.AnnaVetoLayerChat;
+const entryPayload = window.AnnaVetoLayerEntryPayload;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -11,7 +12,9 @@ const state = {
   runtimeMode: "connecting",
   receipts: [],
   currentReceipt: null,
-  receiptFilter: "ALL"
+  receiptFilter: "ALL",
+  formDirty: false,
+  entryPayloadHash: null
 };
 
 const scenarios = {
@@ -100,6 +103,8 @@ async function connectAnna() {
     const tool = tools.tools?.find((item) => item.tool_id === EXECUTA_TOOL_ID);
     const detail = tool?.status === "deploying" ? "Policy tool is deploying" : "Policy tool + Anna AI ready";
     setRuntimeStatus("live", "Connected to Anna", detail);
+    applyEntryPayload(state.anna.entryPayload, "launch");
+    state.anna.on?.("entry_payload", (payload) => applyEntryPayload(payload, "updated request"));
   } catch (error) {
     console.info("Anna runtime unavailable; using standalone preview mode.", error?.message || error);
     state.anna = null;
@@ -165,6 +170,36 @@ function populateScenario(name) {
   document.querySelectorAll(".demo-chip").forEach((element) => {
     element.classList.toggle("is-selected", element.dataset.scenario === name);
   });
+  state.formDirty = true;
+}
+
+function applyEntryPayload(rawPayload, source) {
+  if (!rawPayload || !entryPayload) return false;
+  const parsed = entryPayload.parse(rawPayload);
+  if (!parsed.ok) {
+    showToast(`Anna request needs attention: ${parsed.errors.join(" ")}`);
+    return false;
+  }
+  if (parsed.fingerprint === state.entryPayloadHash) return false;
+  if (state.formDirty && !window.confirm("Replace your unsaved edits with the updated Anna request?")) {
+    showToast("Your unsaved edits were kept.");
+    return false;
+  }
+
+  const form = $("action-form");
+  const action = parsed.value.action;
+  for (const [key, value] of Object.entries(action)) {
+    if (!form.elements[key]) continue;
+    form.elements[key].value = Array.isArray(value) ? value.join("\n") : String(value ?? "");
+  }
+  state.entryPayloadHash = parsed.fingerprint;
+  state.formDirty = false;
+  const requestLabel = parsed.value.request_id ? `Request ${parsed.value.request_id}` : "Anna request";
+  $("entry-payload-status").textContent = `${requestLabel} prefilled from ${source}. Review the proposal before running the checkpoint.`;
+  $("entry-payload-status").hidden = false;
+  switchView("evaluate");
+  showToast("Anna request prefilled. Review it before evaluation.");
+  return true;
 }
 
 function formPayload(form) {
@@ -181,6 +216,10 @@ function formPayload(form) {
     recipient: String(data.get("recipient") || "").trim(),
     evidence: String(data.get("evidence") || "")
       .split(/[,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+    permissions: String(data.get("permissions") || "")
+      .split(/[\,\n]/)
       .map((item) => item.trim())
       .filter(Boolean),
     rollback_plan: String(data.get("rollback_plan") || "").trim()
@@ -619,6 +658,9 @@ function bindEvents() {
   });
   document.querySelectorAll(".demo-chip").forEach((element) => {
     element.addEventListener("click", () => populateScenario(element.dataset.scenario));
+  });
+  $("action-form").addEventListener("input", () => {
+    state.formDirty = true;
   });
   document.querySelectorAll(".filter-button").forEach((element) => {
     element.addEventListener("click", () => {

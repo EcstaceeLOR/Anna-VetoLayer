@@ -13,7 +13,7 @@
     "files": false,
     "scopes": {}
   },
-  "system_prompt_addendum": "Anna VetoLayer is the approval checkpoint for consequential agent actions. When the user asks whether an action should execute, use the bundled policy-engine evaluate_action tool. Never claim an action was executed: this app evaluates and records decisions only. Deterministic BLOCK findings are authoritative and cannot be overruled by contextual AI or human review. Open the main view when the user wants to inspect, submit, or review a decision.",
+  "system_prompt_addendum": "Anna VetoLayer is the approval checkpoint for consequential agent actions. When the user asks whether an action should execute, use the bundled policy-engine evaluate_action tool. Never claim an action was executed: this app evaluates and records decisions only. Deterministic BLOCK findings are authoritative and cannot be overruled by contextual AI or human review. When opening or updating the main view for a #anna-vetolayer request, pass entry_payload with schema_version 'anna-vetolayer.entry-payload.v1', optional stable request_id, and action {actor, tool, operation, target, environment, impact, summary, amount?, recipient?, evidence?: string[], permissions?: string[], rollback_plan?}. Reuse request_id when updating the same request. The UI pre-fills only; it never evaluates or executes without the user's explicit Run checkpoint action.",
   "user_message_prefix_template": "[Anna VetoLayer evaluation] {user_message}",
   "tags": ["agent-safety", "governance", "human-in-the-loop", "developer-tools"],
   "ui": {

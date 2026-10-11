@@ -47,6 +47,20 @@ test("holds an unsupported production deploy for review", () => {
   assert.equal(result.can_ai_allow, false);
 });
 
+test("preserves requested permissions in the decision receipt", () => {
+  const receipt = evaluateAction({
+    actor: "Release Agent",
+    tool: "github",
+    operation: "deploy",
+    target: "payments-api",
+    environment: "staging",
+    impact: "code",
+    summary: "Deploy the approved staging release.",
+    permissions: ["deployments:write"]
+  });
+  assert.deepEqual(receipt.action.permissions, ["deployments:write"]);
+});
+
 test("describe returns the bare tool manifest", () => {
   const response = handleRequest({ jsonrpc: "2.0", id: 1, method: "describe" });
   assert.equal(response.result.name, "anna-vetolayer-policy-engine");

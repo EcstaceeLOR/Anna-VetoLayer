@@ -12,6 +12,7 @@ const policyStudio = window.AnnaVetoLayerPolicyStudio;
 const growthFunnel = window.AnnaVetoLayerGrowthFunnel;
 const receiptIntegrity = window.AnnaVetoLayerReceiptIntegrity;
 const receiptStorage = window.AnnaVetoLayerReceiptStorage;
+const sharedReview = window.AnnaVetoLayerSharedReview?.create(window.__ANNA_SHARED_REVIEW__ || {});
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -590,6 +591,14 @@ async function evaluate(event) {
     state.receipts.unshift(receipt);
     const persisted = await saveReceipt(receipt);
     receipt.persistence = persisted ? "persisted" : "unpersisted";
+    if (receipt.outcome === "REVIEW" && sharedReview?.enabled) {
+      try {
+        await sharedReview.submit(receipt);
+      } catch (error) {
+        console.warn("Shared review submission failed.", error);
+        showToast("Receipt saved locally, but the shared review queue is unavailable.");
+      }
+    }
     await new Promise((resolve) => setTimeout(resolve, 280));
     renderDecision(receipt);
     renderCounts();
@@ -654,6 +663,26 @@ function renderReviews() {
         </div>
       </article>`;
   }).join("");
+  if (sharedReview?.enabled) {
+    document.querySelectorAll(".review-controls").forEach((controls) => {
+      controls.innerHTML = '<p class="review-help">This request is in the shared queue. A separately authenticated reviewer must resolve it; local self-approval is disabled.</p>';
+    });
+  }
+}
+
+async function deliverSharedNotifications() {
+  if (!sharedReview?.enabled || !state.anna?.chat?.append_artifact || !chatArtifact) return;
+  try {
+    const { notifications = [] } = await sharedReview.notifications();
+    for (const notification of notifications) {
+      const receipt = state.receipts.find((item) => item.receipt_id === notification.request_id);
+      if (!receipt) continue;
+      await state.anna.chat.append_artifact({ artifact: chatArtifact.createReceiptArtifact({ ...receipt, outcome: notification.payload?.outcome || receipt.outcome }) });
+    }
+    if (notifications.length) showToast(`${notifications.length} shared review update${notifications.length === 1 ? "" : "s"} added to Anna.`);
+  } catch (error) {
+    console.warn("Shared review notification delivery failed.", error);
+  }
 }
 
 async function resolveReview(card, resolution) {
@@ -842,6 +871,7 @@ function bindEvents() {
       renderCounts();
       renderReviews();
       renderReceipts();
+      deliverSharedNotifications();
     }).catch((error) => console.warn("Receipt refresh failed.", runtimeError?.code(error)));
   });
   $("policy-template").addEventListener("change", (event) => {
@@ -872,6 +902,7 @@ async function init() {
   bindEvents();
   await connectAnna();
   await loadReceipts();
+  await deliverSharedNotifications();
   await recordFunnel("opened");
   await initialiseOnboarding();
   renderCounts();

@@ -95,6 +95,13 @@ test("Policy Studio is versioned, validates activation, and cannot alter hard bl
   assert.match(appJs, /key: "policies\/active"/);
 });
 
+test("receipts use a versioned integrity digest rather than an unsupported signature claim", () => {
+  assert.match(html, /src="receipt-integrity\.js"/);
+  assert.match(appJs, /receiptIntegrity\?\.verify\(receipt, state\.receipts\)/);
+  assert.match(appJs, /integrity_status: verification\.status/);
+  assert.doesNotMatch(html, /signed receipt/i);
+});
+
 test("onboarding measures only privacy-safe qualified live runs", () => {
   assert.match(html, /id="onboarding"/);
   assert.match(html, /Preview runs are never counted as qualified activity/);

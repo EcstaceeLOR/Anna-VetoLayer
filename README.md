@@ -95,3 +95,4 @@ See [docs/entry-payload.md](docs/entry-payload.md) for the versioned Anna launch
 Use [docs/release-review-checklist.md](docs/release-review-checklist.md) against the exact Marketplace release candidate.
 See [docs/marketplace-listing.md](docs/marketplace-listing.md) and [docs/release-runbook.md](docs/release-runbook.md) for the listing and account-bound release steps.
 See [docs/growth-launch-checklist.md](docs/growth-launch-checklist.md) for qualified-run outreach and recovery guidance.
+See [docs/receipt-integrity.md](docs/receipt-integrity.md) for canonical receipt verification and lineage semantics.

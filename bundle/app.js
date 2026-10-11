@@ -11,6 +11,7 @@ const reviewResolution = window.AnnaVetoLayerReviewResolution;
 const runtimeError = window.AnnaVetoLayerRuntimeError;
 const policyStudio = window.AnnaVetoLayerPolicyStudio;
 const growthFunnel = window.AnnaVetoLayerGrowthFunnel;
+const receiptIntegrity = window.AnnaVetoLayerReceiptIntegrity;
 
 const $ = (id) => document.getElementById(id);
 const state = {
@@ -156,7 +157,7 @@ async function saveReceipts() {
       await state.anna.storage.set({
         key: STORAGE_KEY,
         value: state.receipts,
-        metadata: { product: "anna-vetolayer", schema: "1.0" },
+        metadata: { product: "anna-vetolayer", schema: "1.1" },
         tags: ["decision-receipts"]
       });
       return true;
@@ -356,7 +357,7 @@ function localPolicyEvaluation(action) {
   const requiresContext = !hardBlock && findings.some((item) => item.status === "uncertain");
   const outcome = hardBlock ? "BLOCK" : requiresContext ? "REVIEW" : "ALLOW";
   return {
-    schema_version: "1.0",
+    schema_version: "1.1",
     receipt_id: uid("rcpt"),
     request_id: uid("req"),
     evaluated_at: new Date().toISOString(),
@@ -462,15 +463,6 @@ async function runContextualReview(policy) {
   return result;
 }
 
-async function digestReceipt(receipt) {
-  if (!globalThis.crypto?.subtle) return "unavailable";
-  const clone = structuredClone(receipt);
-  delete clone.integrity;
-  const bytes = new TextEncoder().encode(JSON.stringify(clone));
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 function sanitizeOutcome(outcome, fallback = "REVIEW") {
   const value = String(outcome || "").toUpperCase();
   return ["ALLOW", "REVIEW", "BLOCK"].includes(value) ? value : fallback;
@@ -499,9 +491,9 @@ async function finalizeReceipt(policy, context) {
           model: context.model || "Anna AI"
         }
       : null,
-    integrity: { algorithm: "sha256", digest: "pending" }
+    integrity: { format: receiptIntegrity?.FORMAT, algorithm: "sha256", digest: "pending" }
   };
-  receipt.integrity.digest = await digestReceipt(receipt);
+  receipt.integrity.digest = await receiptIntegrity.digest(receipt);
   return receipt;
 }
 
@@ -538,6 +530,10 @@ function renderDecision(receipt) {
   const persistenceNote = receipt.persistence === "unpersisted" ? " This receipt could not be saved to Anna; export it before leaving." : "";
   $("result-context").textContent = `${receipt.contextual_analysis?.summary || receipt.summary}${persistenceNote}`;
   $("receipt-id").textContent = receipt.receipt_id;
+  receiptIntegrity?.verify(receipt, state.receipts).then((integrity) => {
+    $("integrity-status").textContent = `${integrity.label}. Lineage: ${integrity.lineage.status === "valid" ? integrity.lineage.chain.length === 1 ? "root receipt" : `${integrity.lineage.chain.length}-receipt chain` : integrity.lineage.reason}.`;
+    $("integrity-status").dataset.status = integrity.status;
+  });
 
   const allFindings = [
     ...receipt.findings,
@@ -710,9 +706,9 @@ async function resolveReview(card, resolution) {
     policy_re_evaluation: reevaluation ? { receipt_id: reevaluation.receipt_id, engine_version: reevaluation.engine_version, outcome: reevaluation.outcome, hard_block: reevaluation.hard_block, evaluated_at: reevaluation.evaluated_at } : null,
     human_resolution: { outcome: resolution, rationale: checked.value.rationale, evidence: checked.value.evidence, acknowledged_high_risk: checked.value.acknowledged_high_risk, reviewer: "current-user", resolved_at: new Date().toISOString() },
     summary: resolution === "ALLOW" ? "A human reviewer supplied structured evidence and approved after policy re-evaluation." : "A human reviewer blocked the action.",
-    integrity: { algorithm: "sha256", digest: "pending" }
+    integrity: { format: receiptIntegrity?.FORMAT, algorithm: "sha256", digest: "pending" }
   };
-  child.integrity.digest = await digestReceipt(child);
+  child.integrity.digest = await receiptIntegrity.digest(child);
   child.persistence = "pending";
   state.receipts.unshift(child);
   child.persistence = (await saveReceipts()) ? "persisted" : "unpersisted";
@@ -765,9 +761,11 @@ async function sendCurrentToChat() {
   }
 }
 
-function exportCurrentReceipt() {
+async function exportCurrentReceipt() {
   if (!state.currentReceipt) return;
-  const blob = new Blob([JSON.stringify(state.currentReceipt, null, 2)], { type: "application/json" });
+  const verification = receiptIntegrity ? await receiptIntegrity.verify(state.currentReceipt, state.receipts) : { status: "unverifiable", lineage: { status: "unverifiable" } };
+  const exported = { ...state.currentReceipt, verification: { integrity_status: verification.status, lineage: verification.lineage } };
+  const blob = new Blob([JSON.stringify(exported, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#080a0f" />
+    <title>Anna VetoLayer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand" aria-label="Anna VetoLayer">
+          <svg class="brand-mark" viewBox="0 0 32 32" role="img" aria-hidden="true">
+            <path d="M6.4 5.5 16 27 25.6 5.5" fill="none" stroke="currentColor" stroke-width="4.25" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M5.2 15.25h21.6" fill="none" stroke="var(--accent)" stroke-width="4.25" stroke-linecap="round"></path>
+          </svg>
+          <span>Veto<span class="accent-text">Layer</span></span>
+        </div>
+
+        <div class="platform-label"><span></span> Built for Anna</div>
+
+        <nav class="primary-nav" aria-label="Product navigation">
+          <button class="nav-item is-active" data-view="evaluate" type="button">
+            <span class="nav-icon">↗</span>
+            Evaluate
+          </button>
+          <button class="nav-item" data-view="reviews" type="button">
+            <span class="nav-icon">⌁</span>
+            Review queue
+            <span class="nav-count" id="review-count">0</span>
+          </button>
+          <button class="nav-item" data-view="receipts" type="button">
+            <span class="nav-icon">≡</span>
+            Receipts
+          </button>
+        </nav>
+
+        <div class="sidebar-note">
+          <span class="eyebrow">CONTROL PATH</span>
+          <ol>
+            <li><span>01</span> Deterministic policy</li>
+            <li><span>02</span> Anna context</li>
+            <li><span>03</span> Human review</li>
+            <li><span>04</span> Decision receipt</li>
+          </ol>
+        </div>
+
+        <div class="runtime-card">
+          <div class="status-dot" id="runtime-dot"></div>
+          <div>
+            <strong id="runtime-label">Connecting to Anna</strong>
+            <span id="runtime-detail">Checking runtime and tool</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow" id="page-kicker">DECISION CHECKPOINT</span>
+            <h1 id="page-title">Evaluate an action</h1>
+          </div>
+          <div class="topbar-actions">
+            <span class="policy-chip"><i></i> Policy set · Core v1</span>
+            <button class="icon-button" id="clear-data" type="button" title="Clear local demo data" aria-label="Clear local demo data">↺</button>
+          </div>
+        </header>
+
+        <section class="view is-visible" id="view-evaluate" aria-labelledby="page-title">
+          <div class="intro-row">
+            <div>
+              <h2>Stop risky actions <em>before</em> execution.</h2>
+              <p>Submit an agent’s proposed tool call. Hard rules run first; Anna reasons only where policy needs context.</p>
+            </div>
+            <div class="mode-badge"><span>Evaluation mode</span> Fail closed</div>
+          </div>
+
+          <div class="demo-row" aria-label="Load a demo scenario">
+            <span>Try a scenario</span>
+            <button type="button" class="demo-chip" data-scenario="safe">Safe read</button>
+            <button type="button" class="demo-chip is-selected" data-scenario="deploy">Production deploy</button>
+            <button type="button" class="demo-chip" data-scenario="secret">Secret export</button>
+          </div>
+
+          <div class="evaluate-grid">
+            <form class="action-form panel" id="action-form">
+              <div class="panel-heading">
+                <div>
+                  <span class="step-number">01</span>
+                  <div>
+                    <h3>Action proposal</h3>
+                    <p>What is the agent asking permission to do?</p>
+                  </div>
+                </div>
+                <span class="required-note">* Required</span>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  <span>Actor *</span>
+                  <input name="actor" required value="Release Agent" placeholder="e.g. Release Agent" />
+                </label>
+                <label>
+                  <span>Tool *</span>
+                  <input name="tool" required value="github" placeholder="e.g. github" />
+                </label>
+                <label>
+                  <span>Operation *</span>
+                  <input name="operation" required value="deploy-production" placeholder="e.g. deploy-production" />
+                </label>
+                <label>
+                  <span>Target *</span>
+                  <input name="target" required value="payments-api@v2.4.0" placeholder="Resource or customer" />
+                </label>
+                <label>
+                  <span>Environment *</span>
+                  <select name="environment" required>
+                    <option value="sandbox">Sandbox</option>
+                    <option value="development">Development</option>
+                    <option value="staging">Staging</option>
+                    <option value="production" selected>Production</option>
+                  </select>
+                </label>
+                <label>
+                  <span>Impact *</span>
+                  <select name="impact" required>
+                    <option value="code" selected>Code &amp; deployment</option>
+                    <option value="finance">Finance</option>
+                    <option value="access">Access &amp; permissions</option>
+                    <option value="data">Data</option>
+                    <option value="communication">External communication</option>
+                    <option value="infrastructure">Infrastructure</option>
+                  </select>
+                </label>
+                <label class="span-two">
+                  <span>Intent &amp; expected impact *</span>
+                  <textarea name="summary" rows="3" required>Deploy the approved release candidate after staging checks passed; rollback readiness still needs confirmation.</textarea>
+                </label>
+                <label>
+                  <span>Amount in USD</span>
+                  <input name="amount" type="number" min="0" step="0.01" value="0" />
+                </label>
+                <label>
+                  <span>External recipient</span>
+                  <input name="recipient" placeholder="Optional audience or recipient" />
+                </label>
+                <label class="span-two">
+                  <span>Evidence</span>
+                  <textarea name="evidence" rows="2" placeholder="One item per line">CI checks passed
+Two maintainer approvals</textarea>
+                </label>
+                <label class="span-two">
+                  <span>Rollback plan</span>
+                  <textarea name="rollback_plan" rows="2" placeholder="Required for mutating production actions"></textarea>
+                </label>
+              </div>
+
+              <div class="form-footer">
+                <p><span class="lock-icon">◇</span> Evaluation only. VetoLayer never executes the proposed action.</p>
+                <button class="primary-button" id="evaluate-button" type="submit">
+                  <span>Run checkpoint</span>
+                  <b>→</b>
+                </button>
+              </div>
+            </form>
+
+            <aside class="decision-panel panel" id="decision-panel" aria-live="polite">
+              <div class="empty-decision" id="decision-empty">
+                <div class="gate-visual">
+                  <span></span><i></i><span></span>
+                </div>
+                <span class="eyebrow">AWAITING PROPOSAL</span>
+                <h3>No decision yet</h3>
+                <p>Run the checkpoint to see policy findings, contextual analysis, and the signed receipt.</p>
+              </div>
+
+              <div class="decision-progress" id="decision-progress" hidden>
+                <span class="eyebrow">EVALUATION IN PROGRESS</span>
+                <h3 id="progress-title">Running deterministic policy</h3>
+                <p id="progress-copy">Checking protected boundaries and evidence requirements.</p>
+                <div class="progress-track"><span id="progress-bar"></span></div>
+                <ul>
+                  <li id="stage-policy"><i></i> Policy engine</li>
+                  <li id="stage-context"><i></i> Anna context</li>
+                  <li id="stage-receipt"><i></i> Decision receipt</li>
+                </ul>
+              </div>
+
+              <div class="decision-result" id="decision-result" hidden>
+                <div class="result-topline">
+                  <span class="verdict" id="verdict">REVIEW</span>
+                  <span class="risk-score" id="risk-score">Risk 0/100</span>
+                </div>
+                <h3 id="result-summary">Action held for review.</h3>
+                <p id="result-context"></p>
+
+                <div class="finding-list" id="finding-list"></div>
+
+                <div class="receipt-meta">
+                  <span>Receipt</span>
+                  <code id="receipt-id"></code>
+                  <button type="button" id="copy-receipt" aria-label="Copy receipt ID">Copy</button>
+                </div>
+
+                <div class="result-actions">
+                  <button class="secondary-button" id="send-to-chat" type="button">Send to chat</button>
+                  <button class="secondary-button" id="export-receipt" type="button">Export JSON</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="view-reviews">
+          <div class="section-intro">
+            <div>
+              <h2>Human review queue</h2>
+              <p>Resolve only what policy and contextual reasoning could not settle safely.</p>
+            </div>
+            <span class="queue-total" id="queue-total">0 open</span>
+          </div>
+          <div class="review-list" id="review-list"></div>
+        </section>
+
+        <section class="view" id="view-receipts">
+          <div class="section-intro">
+            <div>
+              <h2>Decision receipts</h2>
+              <p>An audit trail of every proposal, verdict, policy finding, and human resolution.</p>
+            </div>
+            <div class="receipt-filters" role="group" aria-label="Filter receipts">
+              <button class="filter-button is-active" data-filter="ALL" type="button">All</button>
+              <button class="filter-button" data-filter="ALLOW" type="button">Allow</button>
+              <button class="filter-button" data-filter="REVIEW" type="button">Review</button>
+              <button class="filter-button" data-filter="BLOCK" type="button">Block</button>
+            </div>
+          </div>
+          <div class="receipt-table-wrap panel">
+            <table class="receipt-table">
+              <thead>
+                <tr>
+                  <th>Verdict</th>
+                  <th>Action</th>
+                  <th>Actor</th>
+                  <th>Risk</th>
+                  <th>Evaluated</th>
+                  <th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="receipt-rows"></tbody>
+            </table>
+            <div class="table-empty" id="receipts-empty">No decision receipts yet.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="anna-tool-ids.js"></script>
+    <script src="app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "tool-dev-anna-vetolayer-policy-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bin": {
+    "tool-dev-anna-vetolayer-policy-engine": "policy-engine.js"
+  },
+  "main": "policy-engine.js",
+  "scripts": {
+    "start": "node policy-engine.js",
+    "test": "node --test policy-engine.test.js"
+  },
+  "executa": {
+    "tool_id": "tool-dev-anna-vetolayer-policy-engine"
+  }
+}

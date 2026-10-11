@@ -1,0 +1,57 @@
+{
+  "schema": 3,
+  "required_executas": [
+    {
+      "tool_id": "bundled:policy-engine",
+      "min_version": "0.1.0",
+      "version": "latest"
+    }
+  ],
+  "optional_executas": [],
+  "storage": {
+    "kv": true,
+    "files": false,
+    "scopes": {}
+  },
+  "system_prompt_addendum": "Anna VetoLayer is the approval checkpoint for consequential agent actions. When the user asks whether an action should execute, use the bundled policy-engine evaluate_action tool. Never claim an action was executed: this app evaluates and records decisions only. Deterministic BLOCK findings are authoritative and cannot be overruled by contextual AI or human review. Open the main view when the user wants to inspect, submit, or review a decision.",
+  "user_message_prefix_template": "[Anna VetoLayer evaluation] {user_message}",
+  "tags": ["agent-safety", "governance", "human-in-the-loop", "developer-tools"],
+  "ui": {
+    "bundle": {
+      "format": "static-spa",
+      "entry": "index.html",
+      "external_origins": []
+    },
+    "views": [
+      {
+        "name": "main",
+        "title": "Anna VetoLayer",
+        "default": true,
+        "entry": "index.html",
+        "min_size": { "w": 420, "h": 560 },
+        "default_size": { "w": 1120, "h": 760 },
+        "max_size": { "w": 1600, "h": 1200 },
+        "resizable": true,
+        "movable": true,
+        "single_instance": true,
+        "summary_template": "VetoLayer decision checkpoint"
+      }
+    ],
+    "form_factors": ["desktop", "mobile"],
+    "host_api": {
+      "tools": ["required:bundled:policy-engine"],
+      "llm": ["complete"],
+      "storage": ["get", "set", "list", "delete"],
+      "chat": ["write_message"],
+      "window": ["set_title"]
+    },
+    "csp_overrides": {
+      "script-src": ["'self'"]
+    },
+    "state_merge": "last_writer_wins"
+  },
+  "dev": {
+    "fixtures": ["fixtures/*.jsonl"],
+    "user_id": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "anna-vetolayer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An Anna-native approval checkpoint for consequential AI-agent actions.",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "dev": "anna-app dev",
+    "dev:mock": "anna-app dev --mock-llm fixtures/context-review.jsonl",
+    "validate": "anna-app validate --strict",
+    "test": "node --test executas/policy-engine/policy-engine.test.js tests/bundle-contract.test.js",
+    "smoke": "node scripts/smoke-plugin.js"
+  },
+  "devDependencies": {
+    "@anna-ai/cli": "0.1.58"
+  }
+}

@@ -67,3 +67,12 @@ test("describe returns the bare tool manifest", () => {
   assert.ok(Array.isArray(response.result.tools[0].parameters));
   assert.equal(response.result.tools[0].description.length > 0, true);
 });
+
+test("protocol handles health, invalid invoke input, and unknown methods", () => {
+  const health = handleRequest({ jsonrpc: "2.0", id: 2, method: "health" });
+  assert.equal(health.result?.status, "ready");
+  const invalid = handleRequest({ jsonrpc: "2.0", id: 3, method: "invoke", params: { tool: "evaluate_action", arguments: null } });
+  assert.equal(invalid.result?.data?.outcome, "REVIEW");
+  const unknown = handleRequest({ jsonrpc: "2.0", id: 4, method: "unknown" });
+  assert.equal(unknown.error?.code, -32601);
+});

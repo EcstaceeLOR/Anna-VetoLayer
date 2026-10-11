@@ -93,3 +93,4 @@ The UI also supports a standalone browser preview. Outside the Anna runtime, it 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [DEMO.md](DEMO.md), and [SUBMISSION.md](SUBMISSION.md).
 See [docs/entry-payload.md](docs/entry-payload.md) for the versioned Anna launch and update payload.
 Use [docs/release-review-checklist.md](docs/release-review-checklist.md) against the exact Marketplace release candidate.
+See [docs/marketplace-listing.md](docs/marketplace-listing.md) and [docs/release-runbook.md](docs/release-runbook.md) for the listing and account-bound release steps.

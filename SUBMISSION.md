@@ -47,12 +47,14 @@ This separation makes the AI valuable where language and context matter while ke
 - **Anna fit:** combines an App UI, bundled Executa, Host LLM, storage, and chat handoff in one coherent workflow.
 - **Creativity and execution:** turns agent governance into a clear pre-flight control path with lineage-preserving receipts.
 
-## Honest scope
+## Release status and honest scope
 
-Anna VetoLayer evaluates and records decisions. It does not execute the proposed third-party action. That separation is intentional: callers should execute only after receiving `ALLOW`. The first submission uses the Executa's local distribution profile for runnable project review; marketplace publication will require a release distribution profile and Anna developer publication credentials.
+Anna VetoLayer evaluates and records decisions. It does not execute the proposed third-party action. That separation is intentional: callers should execute only after receiving `ALLOW`. The policy engine is packaged as native release artifacts for macOS (Intel and Apple Silicon), Linux x86_64, and Windows x86_64. Marketplace publication still requires the maintainer's Anna developer account, review approval, and release action.
 
 ## Submission links
 
 - Repository: <https://github.com/EcstaceeLOR/Anna-VetoLayer>
 - Hackathon: <https://dorahacks.io/hackathon/2349>
 - Anna Developer Hub: <https://anna.partners/developers>
+
+The final submitted Anna App and DoraHacks project URLs are intentionally added only after publication.

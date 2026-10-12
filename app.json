@@ -1,7 +1,7 @@
 {
   "slug": "anna-vetolayer",
   "name": "Anna VetoLayer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "tagline": "A policy and human-approval checkpoint for consequential AI actions.",
   "description": "Anna VetoLayer evaluates a proposed AI-agent action before it executes. A bundled deterministic policy engine handles hard safety rules first. Anna AI is called only when context genuinely matters, unresolved actions enter a human review queue, and every verdict becomes a durable Decision Receipt.\n\nUse it for production changes, permission updates, financial operations, external communications, data exports, and other high-impact tool calls.",
   "category": "developer-tools",

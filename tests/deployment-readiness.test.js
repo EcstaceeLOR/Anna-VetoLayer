@@ -63,6 +63,18 @@ test("reviewer portal exposes only the Clerk publishable key", async () => {
   assert.doesNotMatch(source, /CLERK_SECRET_KEY|DATABASE_URL/);
 });
 
+test("public landing page sends visitors to the preview and reviewer portal", async () => {
+  const html = await readFile(resolve(__dirname, "../index.html"), "utf8");
+  const styles = await readFile(resolve(__dirname, "../landing.css"), "utf8");
+  assert.match(html, /Anna VetoLayer/);
+  assert.match(html, /href="\/bundle\/"/);
+  assert.match(html, /href="\/review"/);
+  assert.match(html, /href="\/privacy"/);
+  assert.match(html, /rel="stylesheet" href="\/landing\.css"/);
+  assert.match(styles, /@media \(max-width: 850px\)/);
+  assert.match(styles, /prefers-reduced-motion/);
+});
+
 test("reviewer portal uses session tokens and renders untrusted receipts without HTML injection", async () => {
   const source = await readFile(resolve(__dirname, "../review-portal.js"), "utf8");
   assert.match(source, /session\?\.getToken\(\)/);

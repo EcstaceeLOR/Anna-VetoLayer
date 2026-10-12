@@ -113,7 +113,7 @@ test("receipt history uses immutable paginated APS records", () => {
 
 test("onboarding measures only privacy-safe qualified live runs", () => {
   assert.match(html, /id="onboarding"/);
-  assert.match(html, /Preview runs are never counted as qualified activity/);
+  assert.match(html, /Browser-only runs are never counted as qualified activity/);
   assert.match(appJs, /\$\("action-form"\)\.requestSubmit\(\)/);
   assert.match(html, /src="growth-funnel\.js"/);
   assert.match(appJs, /await recordFunnel\("opened"\)/);

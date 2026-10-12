@@ -126,7 +126,7 @@ async function connectAnna() {
     if (state.deployedRuntime) {
       setRuntimeStatus("error", "Anna connection failed", "No decision can be issued until the runtime reconnects");
     } else {
-      setRuntimeStatus("preview", "Standalone preview", "Local policy + browser storage");
+      setRuntimeStatus("preview", "Browser workspace", "Local policy + browser storage");
     }
   }
 }
@@ -454,7 +454,7 @@ async function runContextualReview(policy) {
           content: `Evaluate this agent action using only the supplied facts. Return strict JSON with keys outcome (ALLOW, REVIEW, or BLOCK), confidence (0 to 1), summary, risk_flags (array), and requirements (array). If can_ai_allow is false, you must not return ALLOW. Do not claim the action executed.\n\n${JSON.stringify(prompt)}`
         }
       ],
-      systemPrompt: "You are VetoLayer's contextual risk analyst inside Anna. Deterministic hard blocks are authoritative. Missing critical evidence always remains REVIEW or BLOCK. Be concise, skeptical, and explicit about what would change the decision.",
+      systemPrompt: "You are Anna VetoLayer's contextual risk analyst inside Anna. Deterministic hard blocks are authoritative. Missing critical evidence always remains REVIEW or BLOCK. Be concise, skeptical, and explicit about what would change the decision.",
       maxTokens: 650,
       temperature: 0.1,
       metadata: { workflow: "anna-vetolayer-context-review", request_id: policy.request_id }
@@ -812,7 +812,7 @@ async function exportCurrentReceipt() {
 }
 
 async function clearData() {
-  if (!confirm("Clear all Anna VetoLayer demo receipts in this app?")) return;
+  if (!confirm("Clear all locally saved Anna VetoLayer receipts?")) return;
   const receiptsToDelete = [...state.receipts];
   state.receipts = [];
   state.receiptCursor = null;

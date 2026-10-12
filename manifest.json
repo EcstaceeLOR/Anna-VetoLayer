@@ -34,7 +34,7 @@
         "resizable": true,
         "movable": true,
         "single_instance": true,
-        "summary_template": "VetoLayer decision checkpoint"
+        "summary_template": "Anna VetoLayer decision checkpoint"
       }
     ],
     "form_factors": ["desktop", "mobile"],

@@ -8,7 +8,7 @@ button:disabled { cursor: wait; opacity: .55; }
 button.secondary { color: var(--text); background: #1b2330; border: 1px solid var(--line); }
 .topbar { height: 74px; display: flex; align-items: center; justify-content: space-between; padding: 0 clamp(1rem, 5vw, 4rem); border-bottom: 1px solid #202632; backdrop-filter: blur(14px); }
 .brand { color: inherit; text-decoration: none; display: flex; align-items: center; gap: .75rem; }
-.brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: var(--accent); color: #101408; font-weight: 900; }
+.brand-mark { display: block; width: 38px; height: 38px; object-fit: contain; flex: none; }
 .brand strong, .brand small { display: block; }.brand small { margin-top: .12rem; color: var(--muted); }
 main { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; padding: 3.8rem 0 5rem; }
 .hero { max-width: 760px; margin-bottom: 2rem; }.hero h1 { margin: .35rem 0 .75rem; font-size: clamp(2.2rem, 6vw, 4.8rem); line-height: .98; letter-spacing: -.055em; }.hero > p:last-child { max-width: 680px; color: var(--muted); font-size: 1.08rem; line-height: 1.65; }

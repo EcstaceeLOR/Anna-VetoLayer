@@ -73,7 +73,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   letter-spacing: -0.05em;
 }
 
-.brand-mark { width: 30px; height: 30px; }
+.brand-mark { width: 30px; height: 30px; object-fit: contain; flex: none; }
 .accent-text { color: var(--accent); }
 
 .platform-label {
@@ -472,7 +472,7 @@ input::placeholder, textarea::placeholder { color: #4e5662; }
   .app-shell { grid-template-columns: 74px minmax(0, 1fr); }
   .sidebar { padding-inline: 12px; }
   .brand { justify-content: center; }
-  .brand > span, .platform-label, .nav-item:not(.is-active) .nav-count, .nav-item { font-size: 0; }
+  .brand-title, .platform-label, .nav-item:not(.is-active) .nav-count, .nav-item { font-size: 0; }
   .nav-item { grid-template-columns: 1fr; justify-items: center; padding: 12px; }
   .nav-icon { font-size: 17px; }
   .nav-count { position: absolute; top: 4px; right: 5px; font-size: 9px; }
@@ -487,7 +487,7 @@ input::placeholder, textarea::placeholder { color: #4e5662; }
   .app-shell { display: block; }
   .sidebar { position: sticky; z-index: 10; top: 0; width: 100%; height: auto; flex-direction: row; align-items: center; padding: calc(10px + var(--safe-top)) 14px 10px; border-right: 0; border-bottom: 1px solid var(--line); }
   .brand { margin-right: auto; }
-  .brand > span { display: block; font-size: 16px; }
+  .brand-title { display: block; font-size: 16px; }
   .primary-nav { display: flex; }
   .nav-item { width: 44px; }
   .runtime-card { margin: 0 0 0 6px; }

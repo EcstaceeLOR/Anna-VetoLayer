@@ -72,7 +72,7 @@ For zero-secret binary upload, register the release workflow as an Anna trusted 
 `-- SUBMISSION.md                   Hackathon submission copy
 ```
 
-The UI also supports a standalone browser preview. Outside the Anna runtime, it clearly identifies preview mode and uses browser-local receipt storage.
+The Policy Workspace also runs directly in a browser. Outside the Anna runtime, it clearly identifies browser-local receipt storage.
 
 ## Anna capabilities
 

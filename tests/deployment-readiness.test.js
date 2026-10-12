@@ -63,16 +63,34 @@ test("reviewer portal exposes only the Clerk publishable key", async () => {
   assert.doesNotMatch(source, /CLERK_SECRET_KEY|DATABASE_URL/);
 });
 
-test("public landing page sends visitors to the preview and reviewer portal", async () => {
+test("public landing page sends visitors to the policy workspace and reviewer portal", async () => {
   const html = await readFile(resolve(__dirname, "../index.html"), "utf8");
   const styles = await readFile(resolve(__dirname, "../landing.css"), "utf8");
   assert.match(html, /Anna VetoLayer/);
+  assert.match(html, /anna-vetolayer-logo-256\.png/);
+  assert.doesNotMatch(html, /preview/i);
   assert.match(html, /href="\/bundle\/"/);
   assert.match(html, /href="\/review"/);
   assert.match(html, /href="\/privacy"/);
   assert.match(html, /rel="stylesheet" href="\/landing\.css"/);
   assert.match(styles, /@media \(max-width: 850px\)/);
   assert.match(styles, /prefers-reduced-motion/);
+});
+
+test("every public product surface uses the Anna VetoLayer mark and product name", async () => {
+  const [workspace, review, privacy] = await Promise.all([
+    readFile(resolve(__dirname, "../bundle/index.html"), "utf8"),
+    readFile(resolve(__dirname, "../review.html"), "utf8"),
+    readFile(resolve(__dirname, "../privacy.html"), "utf8")
+  ]);
+
+  assert.match(workspace, /anna-vetolayer-logo\.png/);
+  assert.match(workspace, /Anna <span class="accent-text">VetoLayer<\/span>/);
+  assert.doesNotMatch(workspace, /<span>Veto<span class="accent-text">Layer<\/span><\/span>/);
+  assert.match(review, /anna-vetolayer-logo-256\.png/);
+  assert.match(review, /Anna VetoLayer/);
+  assert.match(privacy, /anna-vetolayer-logo-256\.png/);
+  assert.match(privacy, /Anna VetoLayer/);
 });
 
 test("reviewer portal uses session tokens and renders untrusted receipts without HTML injection", async () => {

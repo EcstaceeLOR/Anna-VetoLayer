@@ -4,6 +4,7 @@ import { preflight } from "./_lib/http.mjs";
 const requiredConfiguration = [
   "DATABASE_URL",
   "CLERK_SECRET_KEY",
+  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
   "REVIEW_ALLOWED_ORIGINS",
   "REVIEW_AUTHORIZED_PARTIES"
 ];

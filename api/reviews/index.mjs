@@ -23,6 +23,7 @@ export default async function handler(request, response) {
     if (request.method === "POST") {
       const body = await readJson(request);
       if (!body.team_id || !body.receipt?.receipt_id) throw Object.assign(new Error("team_id and receipt.receipt_id are required."), { statusCode: 400 });
+      if (body.receipt.outcome !== "REVIEW") throw Object.assign(new Error("Only REVIEW decision receipts can enter the shared queue."), { statusCode: 400 });
       const rows = await sql`
         WITH member AS (
           SELECT role FROM review_members WHERE team_id = ${body.team_id}::uuid AND user_id = ${userId}

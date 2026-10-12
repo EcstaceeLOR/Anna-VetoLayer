@@ -22,7 +22,7 @@ test("authenticated API requires an explicit Clerk authorized-party allowlist", 
 
 test("health endpoint reports missing configuration without exposing values", async () => {
   const { default: health } = await import("../api/health.mjs");
-  const names = ["DATABASE_URL", "CLERK_SECRET_KEY", "REVIEW_ALLOWED_ORIGINS", "REVIEW_AUTHORIZED_PARTIES"];
+  const names = ["DATABASE_URL", "CLERK_SECRET_KEY", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "REVIEW_ALLOWED_ORIGINS", "REVIEW_AUTHORIZED_PARTIES"];
   const previous = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   for (const name of names) delete process.env[name];
 
@@ -48,4 +48,37 @@ test("health endpoint reports missing configuration without exposing values", as
       else process.env[name] = previous[name];
     }
   }
+});
+
+test("review portal bootstrap creates exactly one default team and first admin", async () => {
+  const source = await readFile(resolve(__dirname, "../api/bootstrap.mjs"), "utf8");
+  assert.match(source, /ON CONFLICT \(slug\) DO NOTHING/);
+  assert.match(source, /SELECT id, \$\{userId\}, 'admin' FROM team/);
+  assert.match(source, /statusCode: 409/);
+});
+
+test("reviewer portal exposes only the Clerk publishable key", async () => {
+  const source = await readFile(resolve(__dirname, "../api/config.mjs"), "utf8");
+  assert.match(source, /NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY/);
+  assert.doesNotMatch(source, /CLERK_SECRET_KEY|DATABASE_URL/);
+});
+
+test("reviewer portal uses session tokens and renders untrusted receipts without HTML injection", async () => {
+  const source = await readFile(resolve(__dirname, "../review-portal.js"), "utf8");
+  assert.match(source, /session\?\.getToken\(\)/);
+  assert.match(source, /textContent = actionTitle/);
+  assert.doesNotMatch(source, /innerHTML/);
+});
+
+test("every reviewer portal DOM reference resolves to a unique element", async () => {
+  const html = await readFile(resolve(__dirname, "../review.html"), "utf8");
+  const source = await readFile(resolve(__dirname, "../review-portal.js"), "utf8");
+  const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const match of source.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(match[1]), `Missing portal element #${match[1]}`);
+});
+
+test("shared queue accepts review decisions only", async () => {
+  const source = await readFile(resolve(__dirname, "../api/reviews/index.mjs"), "utf8");
+  assert.match(source, /body\.receipt\.outcome !== "REVIEW"/);
 });

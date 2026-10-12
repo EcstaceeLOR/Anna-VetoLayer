@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Anna VetoLayer Review Portal</title>
+    <link rel="stylesheet" href="/review-portal.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/review" aria-label="Anna VetoLayer review portal">
+        <span class="brand-mark">AV</span>
+        <span><strong>Anna VetoLayer</strong><small>Review Portal</small></span>
+      </a>
+      <div id="user-button" aria-label="Account menu"></div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">SEPARATION OF DUTIES</p>
+        <h1>Consequential actions wait for the right human.</h1>
+        <p>Sign in to submit exported REVIEW receipts, collaborate with your team, and record a single auditable decision.</p>
+      </section>
+
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="loading" class="panel centered"><span class="spinner"></span><p>Connecting securely…</p></section>
+      <section id="sign-in-panel" class="panel auth-panel" hidden><div id="sign-in"></div></section>
+
+      <section id="dashboard" hidden>
+        <div class="identity panel">
+          <div><p class="eyebrow">SIGNED-IN USER ID</p><code id="user-id"></code></div>
+          <button id="copy-user-id" class="secondary" type="button">Copy ID</button>
+        </div>
+
+        <section id="onboarding" class="panel" hidden>
+          <h2>Join the review team</h2>
+          <p id="onboarding-copy"></p>
+          <button id="bootstrap-team" type="button" hidden>Initialize review team</button>
+        </section>
+
+        <div id="workspace" hidden>
+          <section class="workspace-heading">
+            <div><p class="eyebrow" id="role-label"></p><h2 id="team-name"></h2></div>
+            <button id="refresh-queue" class="secondary" type="button">Refresh queue</button>
+          </section>
+
+          <div class="workspace-grid">
+            <aside class="sidebar">
+              <section class="panel">
+                <h3>Submit a receipt</h3>
+                <p>Export a REVIEW receipt from Anna VetoLayer, then upload the JSON here.</p>
+                <form id="receipt-form">
+                  <label>Decision receipt JSON<input id="receipt-file" type="file" accept="application/json,.json" required /></label>
+                  <button type="submit">Submit for review</button>
+                </form>
+              </section>
+
+              <section id="member-panel" class="panel" hidden>
+                <h3>Add or update a member</h3>
+                <p>Ask the collaborator to sign in once and send you the user ID shown above.</p>
+                <form id="member-form">
+                  <label>User ID<input id="member-user-id" autocomplete="off" required /></label>
+                  <label>Role<select id="member-role"><option value="reviewer">Reviewer</option><option value="requester">Requester</option><option value="admin">Admin</option></select></label>
+                  <button type="submit">Save membership</button>
+                </form>
+              </section>
+            </aside>
+
+            <section class="queue">
+              <div id="queue-empty" class="panel empty" hidden><h3>No pending reviews</h3><p>New REVIEW receipts will appear here.</p></div>
+              <div id="review-list"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="/review-portal.js" defer></script>
+  </body>
+</html>

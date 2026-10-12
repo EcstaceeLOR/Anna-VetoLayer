@@ -10,7 +10,7 @@ Use this copy in the Anna Developer Console. Keep the public listing aligned wit
 | Tagline | A policy and human-approval checkpoint for consequential AI actions. |
 | Homepage | `https://github.com/EcstaceeLOR/Anna-VetoLayer` |
 | Support | `https://github.com/EcstaceeLOR/Anna-VetoLayer/issues` |
-| Privacy | Add the maintained public privacy-policy URL before submission. |
+| Privacy | `https://anna-vetolayer.vercel.app/privacy` |
 
 ## Long description
 
@@ -22,7 +22,7 @@ Anna VetoLayer evaluates and records decisions; it does not execute the proposed
 
 ## Assets to capture from the release candidate
 
-1. A 256 × 256 PNG or WebP logo (under 2 MB).
-2. One cover image for the Marketplace listing.
+1. Logo: [`assets/marketplace/anna-vetolayer-logo-256.png`](../assets/marketplace/anna-vetolayer-logo-256.png) (256 × 256 transparent PNG, under 2 MB).
+2. Cover: [`assets/marketplace/anna-vetolayer-cover.png`](../assets/marketplace/anna-vetolayer-cover.png).
 3. Up to six screenshots, including: Evaluate with REVIEW; structured Human Review; Decision Receipts; chat card; mobile portrait; mobile landscape.
 4. Capture only from the exact Anna version submitted for review. Do not show browser-preview-only states as Marketplace evidence.

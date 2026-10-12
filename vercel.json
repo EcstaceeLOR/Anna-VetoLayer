@@ -1,7 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/review", "destination": "/review.html" }
+    { "source": "/review", "destination": "/review.html" },
+    { "source": "/privacy", "destination": "/privacy.html" }
   ],
   "functions": {
     "api/**/*.mjs": {

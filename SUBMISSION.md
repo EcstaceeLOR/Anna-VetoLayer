@@ -21,6 +21,7 @@ AI agents can call tools, but tool access alone does not answer whether a specif
 4. Authoritative hard blocks remain blocks; missing critical evidence cannot become an AI allow.
 5. Unresolved decisions enter Human Review.
 6. Every outcome is saved as an integrity-tagged Decision Receipt.
+7. Teams can use the authenticated reviewer portal for role-separated decisions and a shared audit trail.
 
 ## Meaningful use of AI
 
@@ -38,6 +39,7 @@ This separation makes the AI valuable where language and context matter while ke
 | Chat | Shares a concise verdict back to the active Anna conversation |
 | App UI | Provides a responsive evaluation, review, and audit workspace |
 | App mention | Adds safety instructions and the policy tool to Anna's active context |
+| Reviewer portal | Uses Clerk-authenticated roles and a Neon-backed shared review queue |
 
 ## Judging fit
 

@@ -1,7 +1,7 @@
 {
   "slug": "anna-vetolayer-policy-engine",
   "name": "Anna VetoLayer Policy Engine",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "executa_type": "tool",
   "description": "Deterministically evaluates consequential agent actions and produces auditable decision receipts.",
   "tool_id": "tool-dev-anna-vetolayer-policy-engine",

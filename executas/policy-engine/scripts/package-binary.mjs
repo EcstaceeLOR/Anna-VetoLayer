@@ -16,7 +16,7 @@ const platformKey = platformKeys[process.platform]?.[process.arch];
 if (!platformKey) throw new Error(`Unsupported release platform: ${process.platform}-${process.arch}`);
 
 const distDir = join(executaDir, "dist");
-const stageDir = join(distDir, "stage", platformKey);
+const stageDir = join(distDir, "stage", packageJson.version, platformKey);
 const extension = process.platform === "win32" ? "zip" : "tar.gz";
 const archivePath = join(distDir, `anna-vetolayer-policy-engine-${packageJson.version}-${platformKey}.${extension}`);
 const quote = (value) => `'${value.replaceAll("'", "''")}'`;

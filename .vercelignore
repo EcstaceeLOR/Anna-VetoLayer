@@ -1,0 +1,11 @@
+# Local dependencies and generated artifacts are rebuilt by Vercel or supplied by CI.
+node_modules/
+.pnpm-store/
+.git/
+.vercel/
+coverage/
+executas/policy-engine/dist/
+
+# Deployment configuration belongs in Vercel; never upload local credentials.
+.env
+.env.*

@@ -15,6 +15,7 @@
     "test:anna": "vitest run tests/anna-harness.test.mjs",
     "smoke": "node scripts/smoke-plugin.js",
     "release:preflight": "corepack pnpm validate && corepack pnpm test && corepack pnpm test:anna && corepack pnpm smoke && corepack pnpm release:executa",
+    "db:review:migrate": "node --use-system-ca --env-file=.env.local scripts/migrate-review-service.mjs",
     "build:executa": "node executas/policy-engine/scripts/build-binary.mjs",
     "package:executa": "node executas/policy-engine/scripts/package-binary.mjs",
     "verify:executa": "node executas/policy-engine/scripts/verify-package.mjs",

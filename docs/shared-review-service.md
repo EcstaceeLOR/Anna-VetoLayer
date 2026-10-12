@@ -14,7 +14,7 @@ Shared review is an optional separation-of-duties mode. The default remains the 
 
 1. Link a dedicated Vercel project for this repository.
 2. Provision Neon and Clerk through the Vercel Marketplace so `DATABASE_URL` and `CLERK_SECRET_KEY` are injected server-side.
-3. Apply [`review-service/schema.sql`](../review-service/schema.sql) through the Neon SQL console or a migration runner.
+3. Pull the development environment with `vercel env pull .env.local`, then apply [`review-service/schema.sql`](../review-service/schema.sql) with `pnpm db:review:migrate` (or use the Neon SQL console).
 4. Set `REVIEW_ALLOWED_ORIGINS` to the exact released Anna App origin and `REVIEW_AUTHORIZED_PARTIES` to the exact Clerk frontend/portal origins.
 5. Seed the first `review_teams` row and one Clerk user as an `admin` in `review_members`; all later membership changes go through the admin-only endpoint.
 6. Deploy the Vercel project, then add its HTTPS origin to `manifest.ui.bundle.external_origins` before cutting the Anna release.

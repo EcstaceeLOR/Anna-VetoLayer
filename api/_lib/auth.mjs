@@ -6,8 +6,9 @@ export async function authenticate(request) {
   if (!token) throw Object.assign(new Error("Authentication required."), { statusCode: 401 });
   if (!process.env.CLERK_SECRET_KEY) throw new Error("CLERK_SECRET_KEY is not configured.");
   const authorizedParties = String(process.env.REVIEW_AUTHORIZED_PARTIES || "").split(",").map((value) => value.trim()).filter(Boolean);
+  if (!authorizedParties.length) throw new Error("REVIEW_AUTHORIZED_PARTIES is not configured.");
   try {
-    const claims = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY, ...(authorizedParties.length ? { authorizedParties } : {}) });
+    const claims = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY, authorizedParties });
     return { userId: claims.sub };
   } catch {
     throw Object.assign(new Error("Invalid authentication token."), { statusCode: 401 });

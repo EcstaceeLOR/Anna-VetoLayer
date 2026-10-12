@@ -9,7 +9,7 @@ const readline = require("node:readline");
 const MANIFEST = {
   name: "anna-vetolayer-policy-engine",
   display_name: "Anna VetoLayer Policy Engine",
-  version: "0.1.1",
+  version: "0.1.2",
   description: "Evaluate a proposed AI-agent action before execution. Hard policy rules run first and return ALLOW, REVIEW, or BLOCK with an auditable receipt.",
   author: "Anna VetoLayer",
   tools: [

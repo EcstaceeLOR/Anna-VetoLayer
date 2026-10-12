@@ -20,8 +20,8 @@ if (!platformKey) {
   throw new Error(`Unsupported release platform: ${process.platform}-${process.arch}`);
 }
 
-const stageDir = join(executaDir, "dist", "stage", platformKey);
-const buildDir = join(executaDir, "dist", "build", platformKey);
+const stageDir = join(executaDir, "dist", "stage", packageJson.version, platformKey);
+const buildDir = join(executaDir, "dist", "build", packageJson.version, platformKey);
 const binDir = join(stageDir, "bin");
 const binaryName = process.platform === "win32" ? `${binaryBaseName}.exe` : binaryBaseName;
 const binaryPath = join(binDir, binaryName);

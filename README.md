@@ -2,6 +2,10 @@
 
 Anna VetoLayer is an AI-native approval checkpoint for consequential agent actions.
 
+**Live interactive preview:** https://anna-vetolayer.vercel.app/bundle/
+
+**Authenticated reviewer portal:** https://anna-vetolayer.vercel.app/review
+
 It evaluates proposed production changes, financial operations, permission updates, data exports, customer communications, and other high-impact tool calls before execution. Deterministic policy handles hard safety boundaries, Anna AI analyzes genuine ambiguity, Human Review resolves what remains, and every outcome produces an auditable Decision Receipt.
 
 ## Control path

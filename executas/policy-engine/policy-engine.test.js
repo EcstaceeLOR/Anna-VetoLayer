@@ -64,6 +64,8 @@ test("preserves requested permissions in the decision receipt", () => {
 
 test("describe returns the bare tool manifest", () => {
   const response = handleRequest({ jsonrpc: "2.0", id: 1, method: "describe" });
+  const protocolManifest = require("./manifest.json");
+  assert.deepEqual(response.result, protocolManifest);
   assert.equal(response.result.name, "anna-vetolayer-policy-engine");
   assert.ok(Array.isArray(response.result.tools[0].parameters));
   assert.equal(response.result.tools[0].description.length > 0, true);

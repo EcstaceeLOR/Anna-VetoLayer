@@ -1,0 +1,8 @@
+{
+  "$schema": "anna-app-identity/v1",
+  "host": "https://anna.partners",
+  "app_id": 527,
+  "slug": "anna-vetolayer",
+  "handle": "ecstacee",
+  "first_published_at": "2026-10-12T11:31:11.810Z"
+}

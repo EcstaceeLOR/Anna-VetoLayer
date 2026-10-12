@@ -4,20 +4,18 @@
 const crypto = require("node:crypto");
 const readline = require("node:readline");
 
-const VERSION = "0.1.0";
-
+// Kept inline because Node single-executable applications cannot require adjacent JSON.
+// policy-engine.test.js verifies this stays identical to the Anna protocol manifest.
 const MANIFEST = {
   name: "anna-vetolayer-policy-engine",
   display_name: "Anna VetoLayer Policy Engine",
-  version: VERSION,
-  description:
-    "Evaluate a proposed AI-agent action before execution. Hard policy rules run first and return ALLOW, REVIEW, or BLOCK with an auditable receipt.",
-  author: "VetoLayer",
+  version: "0.1.0",
+  description: "Evaluate a proposed AI-agent action before execution. Hard policy rules run first and return ALLOW, REVIEW, or BLOCK with an auditable receipt.",
+  author: "Anna VetoLayer",
   tools: [
     {
       name: "evaluate_action",
-      description:
-        "Evaluate one proposed agent action before it executes. Use for production changes, money movement, access changes, external communications, data exports, or destructive operations.",
+      description: "Evaluate one proposed agent action before it executes. Use for production changes, money movement, access changes, external communications, data exports, or destructive operations.",
       parameters: [
         { name: "actor", type: "string", description: "Agent or service proposing the action.", required: true },
         { name: "tool", type: "string", description: "Tool or integration that would perform the action.", required: true },
@@ -36,6 +34,7 @@ const MANIFEST = {
   ],
   runtime: { type: "node", min_version: "18.0.0" }
 };
+const VERSION = MANIFEST.version;
 
 function normalizeText(value) {
   return String(value || "").trim();

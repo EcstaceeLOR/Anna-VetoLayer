@@ -4,7 +4,36 @@
 const crypto = require("node:crypto");
 const readline = require("node:readline");
 
-const MANIFEST = require("./manifest.json");
+// Kept inline because Node single-executable applications cannot require adjacent JSON.
+// policy-engine.test.js verifies this stays identical to the Anna protocol manifest.
+const MANIFEST = {
+  name: "anna-vetolayer-policy-engine",
+  display_name: "Anna VetoLayer Policy Engine",
+  version: "0.1.0",
+  description: "Evaluate a proposed AI-agent action before execution. Hard policy rules run first and return ALLOW, REVIEW, or BLOCK with an auditable receipt.",
+  author: "Anna VetoLayer",
+  tools: [
+    {
+      name: "evaluate_action",
+      description: "Evaluate one proposed agent action before it executes. Use for production changes, money movement, access changes, external communications, data exports, or destructive operations.",
+      parameters: [
+        { name: "actor", type: "string", description: "Agent or service proposing the action.", required: true },
+        { name: "tool", type: "string", description: "Tool or integration that would perform the action.", required: true },
+        { name: "operation", type: "string", description: "Operation to perform, such as deploy, refund, invite, or delete.", required: true },
+        { name: "target", type: "string", description: "Resource, customer, repository, account, or system affected.", required: true },
+        { name: "environment", type: "string", description: "Environment: sandbox, development, staging, or production.", required: true },
+        { name: "summary", type: "string", description: "Plain-language explanation of intent and expected impact.", required: true },
+        { name: "impact", type: "string", description: "Impact category: code, finance, access, data, communication, or infrastructure.", required: true },
+        { name: "amount", type: "number", description: "Financial amount in USD when relevant.", required: false, default: 0 },
+        { name: "recipient", type: "string", description: "External recipient or audience when relevant.", required: false, default: "" },
+        { name: "evidence", type: "array", description: "Evidence labels or references supporting the action.", required: false, default: [] },
+        { name: "permissions", type: "array", description: "Requested permissions or scopes for the action.", required: false, default: [] },
+        { name: "rollback_plan", type: "string", description: "How the action can be reversed safely.", required: false, default: "" }
+      ]
+    }
+  ],
+  runtime: { type: "node", min_version: "18.0.0" }
+};
 const VERSION = MANIFEST.version;
 
 function normalizeText(value) {
